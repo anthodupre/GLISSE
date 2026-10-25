@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="fr-CA" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Glissades">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1726">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Glissades PDH · Info terrain</title>
+<style>
+:root{
+  --bg1:#eef2f8;--bg2:#d9e3f1;--card:rgba(255,255,255,.86);--solid:#fff;--card2:#eef2f7;--ink:#0b1220;--mute:#5b6678;--line:rgba(15,23,42,.08);--acc:#2563eb;
+  --s0:#94a3b8;--s1:#2563eb;--s2:#059669;--s3:#ea580c;--s4:#dc2626;--ice:#7c3aed;
+  --ok:#059669;--yel:#ca8a04;--warn:#ea580c;--bad:#dc2626;--info:#2563eb;--sim:#7c3aed;
+  --shadow:0 1px 2px rgba(15,23,42,.05),0 10px 28px rgba(15,23,42,.08);
+  --r:1.15rem;--gap:.5rem;--scale:1;
+}
+[data-theme=dark]{
+  --bg1:#05080f;--bg2:#0d1830;--card:rgba(255,255,255,.065);--solid:#101a2c;--card2:rgba(255,255,255,.09);--ink:#f1f5fb;--mute:#9aa8bd;--line:rgba(255,255,255,.09);--acc:#60a5fa;
+  --s0:#64748b;--s1:#3b82f6;--s2:#10b981;--s3:#f97316;--s4:#ef4444;--ice:#a78bfa;
+  --ok:#34d399;--yel:#facc15;--warn:#fb923c;--bad:#f87171;--info:#60a5fa;
+  --shadow:0 1px 0 rgba(255,255,255,.05) inset,0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{font-size:calc(clamp(13px,min(3.75vw,1.95vh),19px)*var(--scale));-webkit-text-size-adjust:100%}
+html,body{margin:0;height:100%;overflow:hidden;color:var(--ink);background:var(--bg1);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+body{background:radial-gradient(130% 70% at 0% 0%,var(--bg2),var(--bg1) 65%);overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+button,input,select{font:inherit;color:inherit}
+svg{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#app{position:fixed;top:0;right:0;bottom:0;left:0;display:flex;flex-direction:column;gap:var(--gap);
+  padding:max(env(safe-area-inset-top),.7rem) max(env(safe-area-inset-right),.85rem) max(env(safe-area-inset-bottom),.6rem) max(env(safe-area-inset-left),.85rem)}
+.mute{color:var(--mute)}
+.c-ok{color:var(--ok)}.c-warn{color:var(--warn)}.c-bad{color:var(--bad)}.c-info{color:var(--info)}.c-yel{color:var(--yel)}
+.k0,.kn,.k-1{background:var(--s0)}.k1{background:var(--s1)}.k2{background:var(--s2)}.k3{background:var(--s3)}.k4{background:var(--s4)}.kice{background:var(--ice)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);
+  padding:.65rem .8rem;min-height:0;min-width:0;overflow:hidden;cursor:pointer}
+.cap{font-size:.74rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mute);display:flex;align-items:center;justify-content:space-between;gap:.5rem;white-space:nowrap}
+.badge{border-radius:99px;padding:.16rem .5rem;font-size:.72rem;font-weight:750;color:#fff;background:var(--s0);letter-spacing:.03em;text-transform:none;white-space:nowrap}
+.badge.ok{background:var(--ok)}.badge.yel{background:var(--yel);color:#111}.badge.warn{background:var(--warn)}.badge.bad{background:var(--bad)}.badge.info{background:var(--info)}.badge.mutebg{background:var(--s0)}
+/* En-tête */
+header{display:flex;align-items:center;gap:.6rem;flex:0 0 auto;min-height:2.9rem}
+.hdl{display:flex;flex-direction:column;line-height:1.05;min-width:0}
+.hdl small{font-size:.74rem;font-weight:700;letter-spacing:.08em;color:var(--mute);text-transform:uppercase;white-space:nowrap}
+.simtag{background:var(--sim);color:#fff;border-radius:.3rem;padding:0 .3rem}
+.clock{font-size:1.8rem;font-weight:800;letter-spacing:-.045em}
+.hr{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:.25rem;min-width:0}
+.pill{border-radius:99px;padding:.34rem .75rem;font-size:.8rem;font-weight:750;color:#fff;background:var(--s0);white-space:nowrap;max-width:52vw;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.upd{display:flex;align-items:center;gap:.25rem;border:0;background:none;padding:0;line-height:1.1;font-size:.74rem;font-weight:650;color:var(--mute);cursor:pointer}
+.upd svg{width:.85rem;height:.85rem}
+.upd.stale{color:var(--bad)}
+.upd.busy svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ib{width:2.6rem;height:2.6rem;border-radius:50%;border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;flex:0 0 auto;cursor:pointer;padding:0}
+.ib svg{width:1.25rem;height:1.25rem}
+/* Pastilles */
+#chips{display:flex;gap:.4rem;overflow-x:auto;overflow-y:hidden;flex:0 0 auto;cursor:pointer;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+#chips::-webkit-scrollbar{display:none}
+#chips:empty{display:none}
+.chip{flex:0 0 auto;border-radius:99px;padding:.3rem .7rem;font-size:.84rem;font-weight:650;background:var(--card);border:1px solid var(--line);white-space:nowrap}
+.chip.bad{background:var(--bad);color:#fff;border-color:transparent}.chip.warn{background:var(--warn);color:#fff;border-color:transparent}
+.chip.yel{background:var(--yel);color:#111;border-color:transparent}.chip.info{background:var(--info);color:#fff;border-color:transparent}
+/* Carte glisse */
+.hero{padding:0;display:flex;flex-direction:column;flex:0 0 auto;border:0}
+.hero-top{padding:.65rem .85rem .6rem;color:#fff;background:linear-gradient(135deg,var(--g1),var(--g2))}
+.hero.l0{--g1:#64748b;--g2:#334155}.hero.l1{--g1:#3b82f6;--g2:#1e40af}.hero.l2{--g1:#10b981;--g2:#047857}
+.hero.l3{--g1:#fb923c;--g2:#c2410c}.hero.l4{--g1:#f87171;--g2:#b91c1c}.hero.lice{--g1:#a78bfa;--g2:#6d28d9}
+.hero-top .cap{color:rgba(255,255,255,.88)}
+.tag{background:rgba(255,255,255,.22);border-radius:99px;padding:.16rem .5rem;font-size:.64rem;letter-spacing:.05em}
+.hero-main{display:flex;align-items:baseline;gap:.6rem;margin-top:.15rem;min-width:0}
+.hero-lv{font-size:2.05rem;font-weight:800;letter-spacing:-.045em;line-height:1;white-space:nowrap}
+.hero-trend{font-size:.95rem;font-weight:650;opacity:.95;white-space:nowrap}
+.hero-sub{font-size:.88rem;font-weight:550;opacity:.95;margin-top:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero-bot{padding:.55rem .85rem .6rem;display:flex;flex-direction:column;gap:.55rem;background:var(--card)}
+.sects{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.4rem}
+.sect{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+.sect span{font-size:.76rem;color:var(--mute);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lvp{border-radius:.6rem;padding:.26rem .1rem;text-align:center;font-size:.82rem;font-weight:750;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hs{display:grid;grid-template-columns:repeat(var(--n,8),minmax(0,1fr));gap:2px;cursor:pointer}
+.hc{display:flex;flex-direction:column;align-items:center;gap:.1rem;line-height:1.15;min-width:0;white-space:nowrap}
+.hc b{font-size:.74rem;color:var(--mute);font-weight:700}
+.hc .e{font-size:.95rem;line-height:1.1}
+.hc i{width:88%;height:.42rem;border-radius:99px;margin:.1rem 0}
+.hc .T{font-weight:750;font-size:.86rem}
+.hc .p{color:var(--info);font-weight:700;font-size:.72rem}
+.hc .p.rn{color:var(--s2)}.hc .p.no{color:var(--mute)}
+/* Zones */
+#zones{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.3rem;padding:.4rem;flex:0 0 auto;cursor:default}
+.zc{border-radius:.65rem;padding:.28rem .05rem;text-align:center;color:#fff;min-width:0;cursor:pointer}
+.zc.k1{background:var(--s1)}.zc.k2{background:var(--s2)}.zc.k3{background:var(--s3)}.zc.k4{background:var(--s4)}
+.zc b{display:block;font-size:.84rem;font-weight:800;letter-spacing:.01em}
+.zc span{display:block;font-size:.74rem;font-weight:650;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zc.cl{opacity:.5}
+.zc.leg{background:var(--card2);color:var(--ink)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);min-height:0}
+#mid{flex:1 1 0;grid-template-columns:1.2fr 1fr}
+/* À noter */
+#notes{display:flex;flex-direction:column;gap:.45rem}
+.cnt{background:var(--card2);color:var(--ink);border-radius:99px;padding:.1rem .5rem;letter-spacing:0}
+.nl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.45rem;overflow:hidden;min-height:0;flex:1 1 auto}
+.nl li{display:flex;gap:.45rem;align-items:flex-start;font-size:.86rem;line-height:1.25;font-weight:560}
+.nl li i{flex:0 0 auto;width:.5rem;height:.5rem;border-radius:50%;margin-top:.34rem;background:var(--s0)}
+.nl li.p1 i{background:var(--bad);box-shadow:0 0 0 .2rem rgba(220,38,38,.18)}
+.nl li.p2 i{background:var(--warn)}
+.nl li span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+/* Ressenti et journée */
+#duo{flex:0 0 auto}
+.stat{display:flex;flex-direction:column;gap:.1rem}
+.kv{display:flex;justify-content:space-between;gap:.4rem;font-size:.82rem;line-height:1.38;white-space:nowrap;min-width:0}
+.kv span{color:var(--mute);overflow:hidden;text-overflow:ellipsis}
+.kv b{font-weight:750;flex:0 0 auto}
+.stat .kvs{display:flex;flex-direction:column;justify-content:space-evenly;flex:1 1 auto;min-height:0}
+.stat .v{font-size:1.85rem;font-weight:800;letter-spacing:-.045em;line-height:1.08;margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat .v.sm{font-size:1.35rem;line-height:1.3}
+.stat .l{font-size:.86rem;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat .s{font-size:.8rem;color:var(--mute);font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat .s.c-warn{color:var(--warn)}
+/* Barre du bas */
+#ftr{display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;flex:0 0 auto;background:var(--card);border:1px solid var(--line);border-radius:1.4rem;padding:.3rem;
+  box-shadow:var(--shadow);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.nb{display:flex;flex-direction:column;align-items:center;gap:.12rem;padding:.34rem 0 .3rem;border:0;background:transparent;border-radius:1.1rem;font-size:.76rem;font-weight:650;cursor:pointer;position:relative}
+.nb svg{width:1.3rem;height:1.3rem}
+.nb:active{background:var(--card2)}
+.nb .n{position:absolute;top:.2rem;left:56%;font-style:normal;background:var(--bad);color:#fff;border-radius:99px;font-size:.62rem;padding:0 .32rem;line-height:1.35}
+/* Panneaux de détail */
+#ov{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(2,6,15,.45);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);display:none;align-items:flex-end;justify-content:center;z-index:10}
+#ov.on{display:flex}
+.mo{background:var(--solid);color:var(--ink);width:min(100%,40rem);max-height:92%;border-radius:1.5rem 1.5rem 0 0;display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 -12px 40px rgba(0,0,0,.25);padding-bottom:env(safe-area-inset-bottom);animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+.mh{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:1.15rem 1.1rem .45rem;font-size:1.2rem;font-weight:800;letter-spacing:-.02em;position:relative}
+.mh::before{content:'';position:absolute;top:.45rem;left:50%;width:2.4rem;height:.28rem;margin-left:-1.2rem;border-radius:99px;background:var(--mute);opacity:.35}
+.mh button{border:0;background:var(--card2);border-radius:50%;width:2.2rem;height:2.2rem;font-size:.95rem;cursor:pointer;flex:0 0 auto}
+.mb{padding:.3rem 1.1rem 1.2rem;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:.55rem;font-size:.95rem;line-height:1.4}
+.mb h4{margin:.5rem 0 0;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
+.mb p{margin:0}
+.r{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;font-size:.92rem;line-height:1.35;min-width:0}
+.r>span:first-child{color:var(--mute);min-width:0}
+.r>b{flex:0 0 auto;font-weight:700;text-align:right}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.3rem 1rem}
+.g2 .r{font-size:.86rem}
+.tbl{width:100%;border-collapse:collapse;font-size:.84rem}
+.tbl td,.tbl th{padding:.32rem .25rem;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.tbl th{color:var(--mute);font-size:.68rem;text-transform:uppercase;letter-spacing:.05em}
+.tbl tr.hl td{background:var(--card2);font-weight:750}
+.sp{display:inline-block;border-radius:.5rem;padding:.1rem .45rem;font-weight:750;font-size:.8rem;color:#fff;white-space:nowrap}
+.gl{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+.gl .lv{font-size:1.6rem;font-weight:800;letter-spacing:-.03em}
+.mini{display:flex;gap:.2rem;align-items:flex-end}
+.mini>span{flex:1 1 0;border-radius:.45rem;font-size:.72rem;text-align:center;color:#fff;font-weight:750;line-height:1.3;padding:.15rem 0}
+.big{font-size:2.8rem;font-weight:800;line-height:.95;letter-spacing:-.05em}
+.wx{display:flex;align-items:center;gap:.7rem;min-width:0}
+.wx2{display:flex;flex-direction:column;font-size:.92rem;line-height:1.3;min-width:0}
+.bars{display:flex;align-items:flex-end;gap:1px;height:5rem;border-bottom:1px solid var(--line);position:relative}
+.bars>span{flex:1 1 0;background:var(--info);border-radius:.15rem .15rem 0 0;min-height:1px}
+.bars>span.rn{background:var(--s2)}.bars>span.fz{background:var(--ice)}.bars>span.z0{background:transparent}
+.bars>.now{position:absolute;top:0;bottom:0;width:2px;background:var(--bad)}
+.bx{display:flex;justify-content:space-between;font-size:.68rem;color:var(--mute)}
+.btn{border:1px solid var(--line);background:var(--card2);border-radius:.9rem;padding:.55rem .85rem;font-weight:700;font-size:.88rem;cursor:pointer}
+.btn.on,.btn.pri{background:var(--acc);color:#fff;border-color:transparent}
+.btn.dng{background:var(--bad);color:#fff;border-color:transparent}
+.bg{display:flex;flex-wrap:wrap;gap:.4rem}
+.inp{border:1px solid var(--line);background:var(--card2);border-radius:.8rem;padding:.55rem .7rem;width:100%;-webkit-user-select:text;user-select:text}
+.lnk{color:var(--acc);font-weight:700;text-decoration:none}
+.chrono{font-size:3rem;font-weight:800;text-align:center;letter-spacing:-.04em;line-height:1}
+.bigbtn{width:100%;padding:.95rem;font-size:1.15rem;font-weight:800;border-radius:1.1rem;border:0;color:#fff;background:var(--ok);cursor:pointer}
+.bigbtn.stop{background:var(--bad)}
+.rad{position:relative;overflow:hidden;border-radius:1rem;background:#cfd8e2;width:100%}
+.rad img{position:absolute;max-width:none;-webkit-user-drag:none}
+.rad .ov{position:absolute;top:0;right:0;bottom:0;left:0;pointer-events:none}
+.radbar{display:flex;gap:.4rem;align-items:center}
+.radbar input{flex:1}
+.sl{display:grid;grid-template-columns:7rem 1fr 3.2rem;align-items:center;gap:.5rem;font-size:.86rem}
+.sl input{width:100%}
+.alrt{border-left:.3rem solid var(--bad);background:var(--card2);padding:.5rem .65rem;border-radius:.6rem;white-space:pre-line;font-size:.88rem}
+.alrt.warn{border-color:var(--warn)}.alrt.yel{border-color:var(--yel)}.alrt.info{border-color:var(--info)}
+/* Petits écrans (iPhone SE, petits Android) */
+@media (orientation:portrait) and (max-height:720px){
+  :root{--gap:.4rem}
+  #app{padding-top:max(env(safe-area-inset-top),.4rem);padding-bottom:max(env(safe-area-inset-bottom),.4rem)}
+  header{min-height:2.5rem}.clock{font-size:1.55rem}.ib{width:2.2rem;height:2.2rem}
+  .card:not(.hero):not(#zones){padding:.5rem .65rem}
+  .hero-top{padding:.5rem .7rem .45rem}.hero-lv{font-size:1.7rem}.hero-sub{margin-top:.1rem}
+  .hero-bot{padding:.45rem .7rem .5rem;gap:.4rem}.hc .e{display:none}
+  .stat .v{font-size:1.55rem;margin-top:0}.opt{display:none}
+  .nb{padding:.25rem 0 .22rem}.nb svg{width:1.15rem;height:1.15rem}
+}
+/* Paysage et grands écrans */
+@media (orientation:landscape) and (max-height:620px){
+  html{font-size:calc(clamp(11px,min(1.75vw,3.2vh),17px)*var(--scale))}
+  #app{display:grid;grid-template-columns:1.15fr 1fr 1fr;grid-template-rows:auto auto minmax(0,1fr) minmax(0,1fr) auto auto;
+    grid-template-areas:"hdr hdr hdr" "chips chips chips" "hero notes co" "hero sn dy" "zones zones zones" "nav nav nav"}
+  .opt{display:none}.stat .v{font-size:1.6rem;margin-top:0}
+  .row2{display:contents}
+  header{grid-area:hdr}#chips{grid-area:chips}#hero{grid-area:hero}#zones{grid-area:zones}#notes{grid-area:notes}#t-sn{grid-area:sn}#t-co{grid-area:co}#t-dy{grid-area:dy}#ftr{grid-area:nav}
+  #zones{grid-template-columns:repeat(14,minmax(0,1fr))}
+  .hero-bot{flex:1;justify-content:space-evenly}.hc .e{display:none}
+}
+@media (min-width:820px) and (min-height:621px){
+  html{font-size:calc(clamp(14px,min(1.5vw,1.85vh),20px)*var(--scale))}
+  #app{display:grid;grid-template-columns:1.1fr 1fr;grid-template-rows:auto auto minmax(0,1fr) auto auto;
+    grid-template-areas:"hdr hdr" "chips chips" "hero mid" "zones duo" "nav nav";
+    padding-left:max(env(safe-area-inset-left),calc((100vw - 1100px)/2),1.2rem);padding-right:max(env(safe-area-inset-right),calc((100vw - 1100px)/2),1.2rem)}
+  header{grid-area:hdr}#chips{grid-area:chips}#hero{grid-area:hero}#zones{grid-area:zones}#mid{grid-area:mid}#duo{grid-area:duo}#ftr{grid-area:nav}
+  .hero-bot{flex:1;justify-content:space-evenly}
+  #ov{align-items:center;padding:1rem}.mo{border-radius:1.5rem}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hdr"></header>
+  <div id="chips" data-act="alerts"></div>
+  <section class="card hero l0" id="hero" data-act="m-glide"></section>
+  <div class="card" id="zones"></div>
+  <div class="row2" id="mid">
+    <section class="card" id="notes" data-act="m-pistes"></section>
+    <section class="card stat" id="t-sn" data-act="m-snow"></section>
+  </div>
+  <div class="row2" id="duo">
+    <section class="card stat" id="t-co" data-act="m-cold"></section>
+    <section class="card stat" id="t-dy" data-act="m-day"></section>
+  </div>
+  <nav id="ftr"></nav>
+</div>
+<div id="ov"><div class="mo"><div class="mh"><span id="mt"></span><button data-act="close" aria-label="Fermer">✕</button></div><div class="mb" id="mb"></div></div></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   GLISSADES DES PAYS D'EN HAUT — OUTIL D'INFO TERRAIN (employés)
+   Un seul fichier, aucune dépendance. Sources (gratuites, sans clé) :
+   - Site officiel (API WordPress) : état et vitesse de glisse par zone
+   - Open-Meteo : météo horaire au point exact du Domaine
+   - Environnement Canada (MSC GeoMet) : alertes, prévisions texte, radar
+   ===================================================================== */
+const CFG = {
+  lat: 45.8847, lon: -74.1234, tz: 'America/Toronto',
+  ecCity: 'qc-c3',                         // Saint-Sauveur (page-ville ECCC)
+  bbox: '-74.20,45.85,-74.05,45.92',        // zone d'alertes autour de Piedmont
+  site: 'https://domainedespaysdenhaut.com/wp-json/wp/v2/pages?slug=les-glissades&_fields=modified_gmt,content',
+  siteWeb: 'https://domainedespaysdenhaut.com/les-glissades/',
+  horaireWeb: 'https://domainedespaysdenhaut.com/les-glissades/planifier-votre-sortie-aux-glissades/horaire/',
+  version: '1.0'
+};
+
+/* Zones de glisse (infos du site officiel). dv = écart de vitesse estimé selon le niveau (pente plus raide = plus rapide) */
+const ZONES = [
+  {id:'olympiade', nom:'Olympiade', c:'OLY',  v:'Tube', p:16, niv:'Bout de chou', rem:'Aucune', gl:'1 à 2', dv:-14, soir:true},
+  {id:'champion',  nom:'Champion',  c:'CHA',  v:'Tube', p:8,  niv:'Bout de chou', rem:'Tapis roulant avec dôme', gl:'1 à 2', dv:-14, soir:true},
+  {id:'podium',    nom:'Podium',    c:'POD',  v:'Tube', p:8,  niv:'Bout de chou', rem:'Tapis roulant avec dôme', gl:'1 à 2', dv:-14, soir:true},
+  {id:'boomerang', nom:'Boomerang', c:'BOO',  v:'Tube', p:4,  niv:'Débutant', rem:'Tapis roulant avec dôme', gl:'1 à 3', dv:-8, soir:true},
+  {id:'toboggan',  nom:'Toboggan',  c:'TOB',  v:'Tube', p:9,  niv:'Débutant à intermédiaire', rem:'Tapis avec dôme ou télésiège', gl:'1 à 6', dv:-4, soir:true},
+  {id:'slalom',    nom:'Slalom',    c:'SLA',  v:'Tube', p:3,  niv:'Intermédiaire', rem:'Télésiège', gl:'2 à 3', dv:0, soir:true},
+  {id:'avalanche', nom:'Avalanche', c:'AVA',  v:'Tube', p:3,  niv:'Expert', rem:'Tapis roulant avec dôme', gl:'2 à 6', taille:'1,32 m (52 po)', dv:7, soir:true},
+  {id:'formule 1', nom:'Formule 1', c:'F1',   v:'Tube', p:3,  niv:'Expert', rem:'Télésiège', gl:'2 à 6', taille:'1,32 m (52 po)', dv:7, soir:true},
+  {id:'yeti',      nom:'Parc du Yéti', c:'YÉTI', v:'Yéti', p:24, niv:'CPE, maternelle, 1re année', rem:'Tapis roulant', gl:'1 à 6', dv:-18, soir:false, note:'Groupes scolaires sur réservation'},
+  {id:'rafting',   nom:'Rafting',   c:'RAFT', v:'Rafting + Tornade', p:3, niv:'Intermédiaire', rem:'Télérafting', gl:'4 à 12', dv:3, soir:true},
+  {id:'tornade',   nom:'Tornade',   c:'TORN', v:'Rafting + Tornade', p:3, niv:'Expert', rem:'Télérafting', gl:'2 à 8', dv:7, soir:true},
+  {id:'bobsleigh', nom:'Bobsleigh', c:'BOB',  v:'Bobsleigh + Vortex360', p:3, niv:'Intermédiaire', rem:'Tapis roulant', gl:'2 à 4', taille:'1,32 m (52 po)', casque:'Obligatoire (prêté)', dv:2, soir:false},
+  {id:'vortex360', nom:'Vortex360', c:'VORT', v:'Bobsleigh + Vortex360', p:3, niv:'Expert', rem:'Tapis roulant', gl:'2 à 6', taille:'1,32 m (52 po)', casque:'Obligatoire (prêté)', dv:7, soir:false}
+];
+
+/* Horaire type d'une saison, calqué sur 2026-2027 et répété chaque année (dates MM-JJ).
+   j = [dim, lun, mar, mer, jeu, ven, sam]; null = fermé. L'état ouvert/fermé du site officiel a priorité. */
+const H1016 = [10,16], H0920 = [9,20], H0916 = [9,16], H0917 = [9,17];
+const HORAIRE = [
+  {du:'11-01', au:'12-13', j:[H1016,null,null,H1016,H1016,H1016,H1016], note:'Si ouvert (date d\'ouverture à confirmer)', tbc:true},
+  {du:'12-14', au:'12-25', h:H1016},
+  {du:'12-26', au:'12-30', h:H0920, note:'Temps des Fêtes'},
+  {du:'12-31', au:'12-31', h:H0917, note:'Temps des Fêtes'},
+  {du:'01-01', au:'01-01', h:H0917, note:'Temps des Fêtes'},
+  {du:'01-02', au:'01-02', h:H0920, note:'Temps des Fêtes'},
+  {du:'01-03', au:'01-03', h:H0916, note:'Temps des Fêtes'},
+  {du:'01-04', au:'02-26', j:[H0916,H1016,H1016,H1016,H1016,H1016,H0920]},
+  {du:'02-27', au:'03-06', h:H0920, note:'Semaine de relâche (dates approx.)'},
+  {du:'03-07', au:'03-07', h:H0916, note:'Semaine de relâche (dates approx.)'},
+  {du:'03-08', au:'03-21', h:H1016},
+  {du:'03-22', au:'04-18', j:[H1016,null,null,null,null,H1016,H1016], note:'Rafting, Yéti et La Cabane seulement'}
+];
+
+/* ===================== Utilitaires ===================== */
+const $ = s => document.querySelector(s);
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+const SET = Object.assign({theme:'auto', refresh:10, scale:1}, LS.get('gpdh.set', {}));
+const DEV = Object.assign({unlocked:false, sim:false, scen:'parfaite', T:null, ws:null, wg:null, snx:1, siteOpen:true, shift:0}, LS.get('gpdh.dev', {}));
+const saveSet = () => LS.set('gpdh.set', SET);
+const saveDev = () => LS.set('gpdh.dev', DEV);
+const NOW = () => Date.now() + (DEV.unlocked ? (DEV.shift || 0) : 0);
+const HOUR = 3600e3;
+const pad = n => String(n).padStart(2, '0');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = x => (x == null || x === '' || !isFinite(+x)) ? null : +x;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
+const _fp = new Intl.DateTimeFormat('en-US', {timeZone:CFG.tz, hourCycle:'h23', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', weekday:'short'});
+const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function lp(ms) {
+  const o = {};
+  for (const p of _fp.formatToParts(new Date(ms))) o[p.type] = p.value;
+  return {y:+o.year, mo:+o.month, d:+o.day, h:(+o.hour) % 24, mi:+o.minute, s:+o.second, wd:WD.indexOf(o.weekday)};
+}
+const ymd = ms => { const p = lp(ms); return p.y + '-' + pad(p.mo) + '-' + pad(p.d); };
+const hm = ms => { if (ms == null || isNaN(ms)) return '—'; const p = lp(ms); return p.h + ':' + pad(p.mi); };
+const hh = ms => { if (ms == null) return '—'; const p = lp(ms); return p.h + ' h' + (p.mi ? ' ' + pad(p.mi) : ''); };
+function tzOff(ms) { const p = lp(ms); return Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi, p.s) - Math.floor(ms / 1000) * 1000; }
+function localMs(y, mo, d, h, mi) {
+  const g = Date.UTC(y, mo - 1, d, h, mi || 0); let t = g - tzOff(g); const o2 = tzOff(t);
+  if (g - o2 !== t) t = g - o2; return t;
+}
+const JOURS = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+const MOIS = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+const dateTxt = ms => { const p = lp(ms); return JOURS[p.wd] + ' ' + p.d + ' ' + MOIS[p.mo - 1]; };
+function dur(ms) {
+  if (ms == null) return '—'; const m = Math.max(0, Math.round(ms / 60000));
+  if (m < 60) return m + ' min'; const h = Math.floor(m / 60), r = m % 60; return h + ' h' + (r ? ' ' + pad(r) : '');
+}
+const MINUS = '\u2212';
+const tf = x => x == null ? '—' : String(Math.round(x)).replace('-', MINUS) + '°';
+const tf1 = x => x == null ? '—' : (Math.round(x * 10) / 10).toFixed(1).replace('.', ',').replace('-', MINUS) + '°';
+const n0 = x => x == null ? '—' : String(Math.round(x));
+const cm = x => x == null ? '—' : x < 0.05 ? '0 cm' : x < 10 ? (Math.round(x * 10) / 10).toString().replace('.', ',') + ' cm' : Math.round(x) + ' cm';
+const mm = x => x == null ? '—' : (Math.round(x * 10) / 10).toString().replace('.', ',') + ' mm';
+const DIRS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
+const dirTxt = d => d == null ? '' : DIRS[Math.round(((d % 360) + 360) % 360 / 22.5) % 16];
+const visTxt = v => v == null ? '—' : v >= 20000 ? '> 20 km' : v >= 1000 ? (Math.round(v / 100) / 10).toString().replace('.', ',') + ' km' : Math.round(v / 50) * 50 + ' m';
+function interp(P, x) {
+  if (x <= P[0][0]) return P[0][1];
+  for (let i = 1; i < P.length; i++) if (x <= P[i][0]) { const [a, b] = P[i - 1], [c, d] = P[i]; return b + (d - b) * (x - a) / (c - a); }
+  return P[P.length - 1][1];
+}
+
+/* ===================== Météo : codes et calculs ===================== */
+const WMO = {0:['Ciel dégagé','☀️','🌙'],1:['Plutôt dégagé','🌤️','🌙'],2:['Partiellement nuageux','⛅','☁️'],3:['Couvert','☁️'],
+  45:['Brouillard','🌫️'],48:['Brouillard givrant','🌫️'],51:['Bruine faible','🌦️'],53:['Bruine','🌦️'],55:['Bruine forte','🌧️'],
+  56:['Bruine verglaçante','🧊'],57:['Bruine verglaçante','🧊'],61:['Pluie faible','🌧️'],63:['Pluie','🌧️'],65:['Pluie forte','🌧️'],
+  66:['Pluie verglaçante','🧊'],67:['Pluie verglaçante forte','🧊'],71:['Neige faible','🌨️'],73:['Neige','🌨️'],75:['Neige forte','❄️'],
+  77:['Neige en grains','🌨️'],80:['Averses de pluie','🌦️'],81:['Averses de pluie','🌧️'],82:['Fortes averses','🌧️'],
+  85:['Averses de neige','🌨️'],86:['Fortes averses de neige','❄️'],95:['Orage','⛈️'],96:['Orage et grêle','⛈️'],99:['Orage et grêle','⛈️']};
+const FRZ = [56,57,66,67], SNOWC = [71,73,75,77,85,86], RAINC = [51,53,55,61,63,65,80,81,82];
+function wmo(code, day) { const w = WMO[code] || ['—','·']; return {label:w[0], emoji:(day === 0 && w[2]) ? w[2] : w[1]}; }
+function windChill(T, V) { if (T == null) return null; if (V == null || T > 10 || V < 5) return T; const v = Math.pow(V, 0.16); return 13.12 + 0.6215 * T - 11.37 * v + 0.3965 * T * v; }
+function wetBulb(T, RH) {
+  if (T == null || RH == null) return null; RH = clamp(RH, 5, 99);
+  return T * Math.atan(0.151977 * Math.sqrt(RH + 8.313659)) + Math.atan(T + RH) - Math.atan(RH - 1.676331) + 0.00391838 * Math.pow(RH, 1.5) * Math.atan(0.023101 * RH) - 4.686035;
+}
+/* Icône ECCC -> code WMO approximatif (mode secours) */
+function ecToWmo(i) {
+  i = +i; const m = {0:0,1:1,2:2,3:3,10:3,30:0,31:1,32:2,33:3,6:80,36:80,7:85,15:85,8:71,37:71,38:71,16:71,17:73,18:75,
+    11:61,12:61,13:63,14:66,19:95,39:95,46:96,23:45,24:45,25:73,40:73,26:77,27:96,28:51};
+  return m[i] != null ? m[i] : 3;
+}
+
+/* ===================== Récupération des données ===================== */
+const D = {
+  om:LS.get('gpdh.c.om', null), ec:LS.get('gpdh.c.ec', null), al:LS.get('gpdh.c.al', null), site:LS.get('gpdh.c.site', null),
+  err:{}, busy:false, last:0
+};
+async function getJSON(url, ms) {
+  const c = new AbortController(); const t = setTimeout(() => c.abort(), ms || 15000);
+  try {
+    const r = await fetch(url, {signal:c.signal, cache:'no-store'});
+    if (!r.ok) { let m = 'HTTP ' + r.status; try { const j = await r.json(); if (j.reason) m += ' – ' + j.reason; } catch (e) {} throw new Error(m); }
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+function omURL() {
+  const cur = 'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m';
+  const hr = 'temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,weather_code,cloud_cover,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,is_day,shortwave_radiation';
+  const dy = 'sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,uv_index_max,wind_gusts_10m_max';
+  return 'https://api.open-meteo.com/v1/forecast?latitude=' + CFG.lat + '&longitude=' + CFG.lon + '&current=' + cur + '&hourly=' + hr + '&daily=' + dy +
+    '&past_days=3&forecast_days=3&timezone=' + encodeURIComponent(CFG.tz) + '&timeformat=unixtime&wind_speed_unit=kmh';
+}
+function normOM(d) {
+  const h = d.hourly, H = [], g = (k, i) => (h[k] ? h[k][i] : null);
+  for (let i = 0; i < h.time.length; i++) {
+    const rain = (g('rain', i) || 0) + (g('showers', i) || 0);
+    H.push({t:h.time[i] * 1000, T:g('temperature_2m', i), RH:g('relative_humidity_2m', i), Td:g('dew_point_2m', i), app:g('apparent_temperature', i),
+      pp:g('precipitation_probability', i), pr:g('precipitation', i), rain:rain, sn:g('snowfall', i), sd:g('snow_depth', i), wc:g('weather_code', i),
+      cc:g('cloud_cover', i), vis:g('visibility', i), ws:g('wind_speed_10m', i), wd:g('wind_direction_10m', i), wg:g('wind_gusts_10m', i),
+      uv:g('uv_index', i), day:g('is_day', i), sw:g('shortwave_radiation', i)});
+  }
+  const c = d.current;
+  const C = c ? {t:c.time * 1000, T:c.temperature_2m, RH:c.relative_humidity_2m, app:c.apparent_temperature, day:c.is_day, pr:c.precipitation,
+    rain:(c.rain || 0) + (c.showers || 0), sn:c.snowfall, wc:c.weather_code, cc:c.cloud_cover, p:c.surface_pressure, ws:c.wind_speed_10m, wd:c.wind_direction_10m, wg:c.wind_gusts_10m} : null;
+  const y = d.daily, DY = [];
+  if (y && y.time) for (let i = 0; i < y.time.length; i++) DY.push({t:y.time[i] * 1000, rise:y.sunrise[i] * 1000, set:y.sunset[i] * 1000,
+    Tmax:y.temperature_2m_max[i], Tmin:y.temperature_2m_min[i], pr:y.precipitation_sum[i], sn:y.snowfall_sum[i], uv:y.uv_index_max[i], wg:y.wind_gusts_10m_max[i]});
+  return {H, C, DY, src:'Open-Meteo'};
+}
+function normEC(p) {
+  const v = o => (o && o.value) ? (o.value.fr != null ? o.value.fr : o.value.en) : null;
+  const cc = p.currentConditions || {};
+  const cur = {t:Date.parse((cc.timestamp && (cc.timestamp.fr || cc.timestamp.en)) || '') || null, T:num(v(cc.temperature)), RH:num(v(cc.relativeHumidity)),
+    ws:num(v(cc.wind && cc.wind.speed)), wg:num(v(cc.wind && cc.wind.gust)), wd:num(v(cc.wind && cc.wind.bearing)), dirTxt:v(cc.wind && cc.wind.direction),
+    cond:cc.condition ? cc.condition.fr : null, icon:cc.iconCode ? cc.iconCode.value : null, wchill:num(v(cc.windChill)), Td:num(v(cc.dewpoint)),
+    p:num(v(cc.pressure)), station:v(cc.station)};
+  const fc = ((p.forecastGroup && p.forecastGroup.forecasts) || []).map(f => ({n:f.period && f.period.textForecastName ? f.period.textForecastName.fr : '', txt:f.textSummary ? f.textSummary.fr : ''}));
+  const hf = ((p.hourlyForecastGroup && p.hourlyForecastGroup.hourlyForecasts) || []).map(h => ({t:Date.parse(h.timestamp), T:num(v(h.temperature)),
+    cond:h.condition ? h.condition.fr : '', icon:h.iconCode ? h.iconCode.value : null, lop:num(v(h.lop)), ws:num(v(h.wind && h.wind.speed)), wchill:num(v(h.windChill))}));
+  const rs = p.riseSet || {};
+  return {cur, fc, hf, rise:Date.parse((rs.sunrise && (rs.sunrise.fr || rs.sunrise.en)) || '') || null, set:Date.parse((rs.sunset && (rs.sunset.fr || rs.sunset.en)) || '') || null,
+    upd:Date.parse(p.lastUpdated || '') || null, nom:p.name ? p.name.fr : 'Saint-Sauveur'};
+}
+function normAlerts(d) {
+  const seen = new Map();
+  for (const f of (d.features || [])) {
+    const p = f.properties || {}; if (p.status_en === 'ended') continue;
+    const key = (p.alert_name_fr || '') + '|' + (p.alert_text_fr || '').slice(0, 120);
+    if (seen.has(key)) continue;
+    seen.set(key, {nom:cap(p.alert_name_fr || p.alert_name_en || 'Alerte'), type:p.alert_type, col:p.risk_colour_en, txt:p.alert_text_fr || p.alert_text_en || '',
+      zone:p.feature_name_fr, exp:Date.parse(p.expiration_datetime || '') || null, deb:Date.parse(p.validity_datetime || '') || null, fin:Date.parse(p.event_end_datetime || '') || null});
+  }
+  return [...seen.values()];
+}
+/* Lecture de la page officielle : HTML -> lignes de texte -> données */
+function decodeEnt(s) {
+  const N = {amp:'&', lt:'<', gt:'>', quot:'"', apos:"'", nbsp:' ', rsquo:'’', lsquo:'‘', laquo:'«', raquo:'»', eacute:'é', egrave:'è', agrave:'à', ecirc:'ê', ccedil:'ç', ocirc:'ô', icirc:'î', ucirc:'û', hellip:'…', ndash:'–', mdash:'—', deg:'°'};
+  return s.replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCodePoint(parseInt(h, 16))).replace(/&#(\d+);/g, (m, n) => String.fromCodePoint(+n))
+    .replace(/&([a-z]+);/gi, (m, n) => N[n.toLowerCase()] != null ? N[n.toLowerCase()] : m);
+}
+function htmlLines(html) {
+  let s = html.replace(/<(script|style|noscript|svg|template)\b[\s\S]*?<\/\1>/gi, ' ');
+  s = s.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|li|h[1-6]|div|td|th|tr|ul|ol|section|article|header|footer|figure|figcaption|button)>/gi, '\n').replace(/<li\b[^>]*>/gi, '\n');
+  s = decodeEnt(s.replace(/<[^>]+>/g, ' '));
+  return s.split('\n').map(l => l.replace(/[\s\u00a0]+/g, ' ').trim()).filter(Boolean);
+}
+const FRAC = /^(\d+)\s*\/\s*(\d+)$/;
+const frac = s => { const m = FRAC.exec(String(s || '').trim()); return m ? {o:+m[1], t:+m[2]} : null; };
+function parseSite(html) {
+  const L = htmlLines(html), out = {pistes:null, rem:null, statut:'', vers:[], zones:{}};
+  for (let i = 1; i < L.length; i++) {
+    if (!out.pistes && /^pistes ouvertes$/i.test(L[i]) && frac(L[i - 1])) out.pistes = frac(L[i - 1]);
+    if (!out.rem && /^remont[ée]es ouvertes$/i.test(L[i]) && frac(L[i - 1])) out.rem = frac(L[i - 1]);
+  }
+  const a = L.findIndex(l => /^aujourd/i.test(l));
+  if (a >= 0) { const b = []; for (let j = a + 1; j < Math.min(L.length, a + 6) && !frac(L[j]); j++) b.push(L[j]); out.statut = b.join(' '); }
+  const zStart = L.findIndex(l => /carte des pistes|^zone olympiade$/i.test(l));
+  let cv = null;
+  for (let i = 0; i < (zStart > 0 ? zStart : L.length); i++) {
+    const l = L[i];
+    if (/^(versant .+|parc du y[ée]ti)$/i.test(l) && frac(L[i + 1])) { cv = {nom:l.replace(/^versant /i, ''), fr:frac(L[i + 1]), vit:[]}; out.vers.push(cv); i++; continue; }
+    const m = /^vitesse de glisse\s*(.*)$/i.exec(l);
+    if (m && cv && L[i + 1]) { cv.vit.push({lbl:m[1].trim() || cv.nom, val:L[i + 1]}); i++; }
+  }
+  const KEYS = {'etat des pistes':'etat', 'pistes ouvertes':'pistes', 'vitesse de glisse':'vit', 'glissade de soiree':'soir', 'niveau de glisse':'niv', 'type de remontee':'rem', 'nombre de glisseurs':'gl', 'casque':'casque', 'grandeur minimale':'taille'};
+  for (let i = 0; i < L.length; i++) {
+    if (!/^(zone .+|parc du y[ée]ti)$/i.test(L[i])) continue;
+    if (!L.slice(i + 1, i + 4).some(x => /conditions de glisse/i.test(x))) continue;
+    const zn = norm(L[i].replace(/^zone /i, '')), z = ZONES.find(Z => zn === Z.id || zn.includes(Z.id));
+    if (!z) continue;
+    const rec = {};
+    for (let j = i + 1; j < Math.min(L.length, i + 40); j++) {
+      if (/^(zone .+|parc du y[ée]ti)$/i.test(L[j]) && j > i + 1) break;
+      const m = /^([^:]{2,40}?)\s*:\s*(.+)$/.exec(L[j]); if (!m) continue;
+      const k = KEYS[norm(m[1])]; if (k && rec[k] == null) rec[k] = m[2].trim();
+    }
+    if (rec.pistes) rec.fr = frac(rec.pistes);
+    out.zones[z.id] = rec;
+  }
+  return out;
+}
+async function fetchAll() {
+  if (D.busy) return; D.busy = true; renderHeader(); const t = Date.now();
+  const jobs = [
+    getJSON(omURL()).then(d => { D.om = {t, d:normOM(d)}; LS.set('gpdh.c.om', D.om); D.err.om = null; }).catch(e => { D.err.om = e.message || String(e); }),
+    getJSON('https://api.weather.gc.ca/collections/citypageweather-realtime/items/' + CFG.ecCity + '?f=json&lang=fr').then(d => { D.ec = {t, d:normEC(d.properties || {})}; LS.set('gpdh.c.ec', D.ec); D.err.ec = null; }).catch(e => { D.err.ec = e.message || String(e); }),
+    getJSON('https://api.weather.gc.ca/collections/weather-alerts/items?f=json&lang=fr&limit=100&bbox=' + CFG.bbox).then(d => { D.al = {t, d:normAlerts(d)}; LS.set('gpdh.c.al', D.al); D.err.al = null; }).catch(e => { D.err.al = e.message || String(e); }),
+    getJSON(CFG.site + '&_=' + Math.floor(t / 60000), 20000).then(d => {
+      const p = Array.isArray(d) ? d[0] : d; if (!p || !p.content) throw new Error('Page introuvable');
+      D.site = {t, mod:Date.parse((p.modified_gmt || '') + 'Z') || null, d:parseSite(p.content.rendered || '')}; LS.set('gpdh.c.site', D.site); D.err.site = null;
+    }).catch(e => { D.err.site = e.message || String(e); })
+  ];
+  await Promise.allSettled(jobs);
+  D.busy = false; D.last = Date.now(); render();
+  if ($('#ov').classList.contains('on') && $('#mt').textContent.startsWith('DEV')) mDev();
+}
+
+/* ===================== Mode DEV : simulation ===================== */
+const SCEN = {
+  parfaite:  {nom:'Journée parfaite', T:-7,  amp:3, ws:8,  wg:15, RH:70, f:k => ({cc:15})},
+  tempete:   {nom:'Tempête de neige', T:-9,  amp:1, ws:28, wg:55, RH:93, f:k => (k > -8 && k < 14) ? {sn:2, wc:75, vis:400, cc:100} : {cc:90}},
+  verglas:   {nom:'Verglas',          T:-1,  amp:1, ws:15, wg:30, RH:97, f:k => k < -6 && k > -30 ? {Tset:3, rain:1.2, wc:61, cc:100} : (k >= -6 && k < 6 ? {rain:1, wc:66, cc:100, vis:3000} : {cc:80})},
+  froid:     {nom:'Froid extrême',    T:-34, amp:3, ws:30, wg:45, RH:60, f:k => ({cc:5})},
+  redoux:    {nom:'Redoux puis regel', T:4,  amp:1, ws:12, wg:25, RH:95, f:k => k <= 2 && k > -24 ? {rain:k > -6 ? 1 : 0.3, wc:k > -6 ? 61 : 3, cc:100} : (k > 2 ? {Tset:Math.max(-9, 4 - (k - 2) * 1.6), cc:40} : {})},
+  poudrerie: {nom:'Poudrerie',        T:-15, amp:2, ws:42, wg:68, RH:75, f:k => k > -24 && k < -4 ? {sn:0.5, wc:71, cc:100} : (k >= -4 && k < 8 ? {vis:800, cc:50} : {cc:40})},
+  neige:     {nom:'Neige cet après-midi', T:-5, amp:3, ws:10, wg:20, RH:80, f:k => k >= 3 && k < 11 ? {sn:1.2, wc:73, cc:100} : {cc:60}},
+  printemps: {nom:'Printemps ensoleillé', T:6, amp:6, ws:8, wg:18, RH:55, f:k => ({cc:5, uvx:1})}
+};
+function simData() {
+  const sc = SCEN[DEV.scen] || SCEN.parfaite, now = NOW(), t0 = Math.floor(now / HOUR) * HOUR, h0 = lp(t0).h;
+  const T0 = DEV.T != null ? DEV.T : sc.T, ws0 = DEV.ws != null ? DEV.ws : sc.ws, wg0 = DEV.wg != null ? DEV.wg : sc.wg, snx = DEV.snx;
+  const dT = T0 - sc.T, H = [];
+  for (let k = -72; k <= 72; k++) {
+    const t = t0 + k * HOUR, lh = lp(t).h, o = sc.f(k) || {};
+    const di = sc.amp * (Math.cos(2 * Math.PI * (lh - 15) / 24) - Math.cos(2 * Math.PI * (h0 - 15) / 24));
+    let T = (o.Tset != null ? o.Tset + dT : T0 + di);
+    const day = (lh >= 7 && lh < 17) ? 1 : 0, sunk = Math.max(0, Math.sin(Math.PI * (lh - 7) / 10));
+    const sn = (o.sn || 0) * snx, rain = o.rain || 0;
+    let wc = o.wc != null ? o.wc : (o.cc > 85 ? 3 : o.cc > 50 ? 2 : o.cc > 20 ? 1 : 0);
+    if (sn > 0 && o.wc == null) wc = 73; if (o.sn && snx === 0) wc = 3;
+    H.push({t, T, RH:sc.RH, Td:T - (100 - sc.RH) / 5, app:windChill(T, ws0), pp:(sn || rain) ? 90 : 5, pr:rain + sn / 1.2, rain, sn,
+      sd:0.4, wc, cc:o.cc != null ? o.cc : 50, vis:o.vis || 24000, ws:ws0 * (0.85 + 0.3 * Math.random()), wd:290, wg:wg0 * (0.85 + 0.3 * Math.random()),
+      uv:day ? sunk * (o.uvx ? 5 : 2) : 0, day, sw:day ? sunk * (o.uvx ? 750 : 420) * (1 - (o.cc || 0) / 130) : 0});
+  }
+  const i0 = 72, c = H[i0];
+  const C = {t:now, T:c.T, RH:c.RH, app:c.app, day:c.day, pr:c.pr, rain:c.rain, sn:c.sn, wc:c.wc, cc:c.cc, p:1015, ws:ws0, wd:290, wg:wg0};
+  const DY = [];
+  for (let d = -2; d <= 2; d++) {
+    const p = lp(now + d * 24 * HOUR), dt = localMs(p.y, p.mo, p.d, 0, 0);
+    const day = H.filter(x => x.t >= dt && x.t < dt + 24 * HOUR);
+    DY.push({t:dt, rise:localMs(p.y, p.mo, p.d, 7, 12), set:localMs(p.y, p.mo, p.d, 16, 25), Tmax:Math.max(...day.map(x => x.T)), Tmin:Math.min(...day.map(x => x.T)),
+      pr:day.reduce((a, x) => a + x.pr, 0), sn:day.reduce((a, x) => a + x.sn, 0), uv:Math.max(...day.map(x => x.uv)), wg:Math.max(...day.map(x => x.wg))});
+  }
+  return {H, C, DY, src:'Simulation : ' + sc.nom};
+}
+function simSite() {
+  const zones = {}; const open = DEV.siteOpen;
+  for (const z of ZONES) {
+    const o = open ? (z.id === 'yeti' ? 0 : z.p) : 0;
+    zones[z.id] = {etat:open ? 'ouvert' : 'fermé', fr:{o, t:z.p}, soir:z.soir ? 'disponible' : 'non disponible'};
+  }
+  const tot = ZONES.reduce((a, z) => a + z.p, 0), op = open ? tot - 24 : 0;
+  return {t:NOW(), mod:NOW(), sim:true, d:{pistes:{o:op, t:90}, rem:{o:open ? 4 : 0, t:6}, statut:open ? 'Les Glissades sont ouvertes.' : 'Les Glissades sont fermées.', vers:[], zones}};
+}
+
+/* ===================== Analyse : indices et recommandations ===================== */
+const GLV = [{max:38, k:1, n:'Lente'}, {max:56, k:2, n:'Modérée'}, {max:76, k:3, n:'Rapide'}, {max:999, k:4, n:'Très rapide'}];
+const glv = s => GLV.find(g => s < g.max);
+const SECT = [
+  {n:'Bout de chou', ids:['olympiade','champion','podium'], dv:-14},
+  {n:'Débutant', ids:['boomerang','toboggan'], dv:-6},
+  {n:'Intermédiaire', ids:['slalom','rafting','bobsleigh'], dv:2},
+  {n:'Expert', ids:['avalanche','formule 1','tornade','vortex360'], dv:7}
+];
+const adj = (s, dv) => clamp(Math.round(s + (dv || 0)), 3, 100);
+const ABR = {1:'Lente', 2:'Modér.', 3:'Rapide', 4:'T. rapide'};
+const spB = lv => lv ? '<span class="sp k' + lv.k + '" style="font-size:.62rem">' + ABR[lv.k] + '</span>' : '—';
+function sumK(arr, k) { let s = 0, any = false; for (const x of arr) if (x[k] != null) { s += x[k]; any = true; } return any ? s : null; }
+function maxK(arr, k) { let m = null; for (const x of arr) if (x[k] != null && (m == null || x[k] > m)) m = x[k]; return m; }
+/* ===================== Modèle de vitesse de glisse =====================
+   Simulation heure par heure de la surface des couloirs depuis 72 h :
+   - température de la surface de la neige (plus froid = neige dure = plus rapide);
+   - neige fraîche non tassée (ralentit, se tasse avec le temps et le passage des tubes);
+   - humidité de surface : fonte au-dessus de 0, pluie, soleil près de 0 (neige mouillée = lent);
+   - croûte de glace : regel d'une neige mouillée ou verglas (très rapide), recouverte par la neige fraîche;
+   - âge de la neige : plusieurs jours sans neige = neige tassée et dure (plus rapide);
+   - vent fort avec neige disponible : neige soufflée dans les couloirs (plus lent). */
+const TS_CURVE = [[-30,80],[-20,76],[-15,72],[-10,68],[-6,63],[-3,58],[-1,52],[0,46]];
+function surfTemp(h) {
+  if (h.T == null) return null;
+  if (h.T > 0) return 0;
+  const cc = h.cc != null ? h.cc : 60, ws = h.ws || 0;
+  let ts = h.T;
+  if (h.day) ts += (h.sw || 0) / 120 * (1 - Math.min(ws, 40) / 80);              // le soleil réchauffe la surface
+  else ts -= 3 * (1 - cc / 100) * (ws < 10 ? 1 : ws < 25 ? 0.6 : 0.3);          // nuit claire et calme : la surface refroidit
+  return Math.min(0, ts);
+}
+const GCACHE = new WeakMap();
+function glideSeries(H) {
+  if (GCACHE.has(H)) return GCACHE.get(H);
+  const out = []; let fresh = 0, wet = 0, ice = 0, age = 48; const snowLog = [];
+  for (let i = 0; i < H.length; i++) {
+    const h = H[i]; if (!h || h.T == null) { out.push(null); continue; }
+    const T = h.T, sn = h.sn != null ? Math.max(0, h.sn) : 0, rain = h.rain || 0;
+    const frz = FRZ.includes(h.wc) || (rain >= 0.1 && T <= 0);
+    const lh = lp(h.t).h, open = lh >= 9 && lh < 20;
+    /* Neige fraîche : s'accumule, puis se tasse (plus vite si humide ou pendant les heures d'ouverture) */
+    const tau = (T > -2 ? 6 : 12) * (open ? 0.7 : 1);
+    fresh = fresh * Math.exp(-1 / tau) + sn;
+    if (fresh < 0.05) fresh = 0;
+    age = sn >= 0.3 ? 0 : age + 1;
+    snowLog.push(sn); if (snowLog.length > 48) snowLog.shift();
+    const snow48 = snowLog.reduce((a, x) => a + x, 0);
+    /* Humidité de surface : apport de fonte, puis regel en croûte quand il refait froid */
+    let m = 0;
+    if (T > 0) m += 0.1 * T;
+    if (rain > 0 && T > 0.5) m += 0.2 * rain;
+    if (h.day && T > -4 && (h.sw || 0) > 300) m += (h.sw - 300) / 1500 * (T > -1 ? 1.5 : 1);
+    if (T > -1 && (h.RH || 0) >= 95 && !frz) m += 0.03;
+    wet = Math.min(1, wet + m);
+    if (T < 0 && m === 0 && wet > 0) {
+      const clear = !h.day && (h.cc == null || h.cc < 50);
+      const w2 = wet * Math.exp(-(0.15 * -T + (clear ? 0.1 : 0)));
+      ice = Math.min(1, ice + (wet - w2) * 0.9);
+      wet = w2 < 0.02 ? 0 : w2;
+    }
+    /* Glace : verglas direct, fond au-dessus de 0, s'use lentement, enfouie sous une bonne chute */
+    if (frz) { ice = Math.min(1, ice + 0.4 * Math.max(0.5, rain || h.pr || 0)); wet *= 0.5; }   // la pluie verglaçante gèle en surface
+    if (T > 0) ice *= Math.exp(-0.15 * T);
+    ice *= Math.exp(-1 / 72) * Math.exp(-sn / 5);
+    if (ice < 0.02) ice = 0;
+    /* Vitesse (indice 0-100) */
+    const Ts = surfTemp(h), base = interp(TS_CURVE, Ts), F = [];
+    let s = base;
+    F.push({ico:'🌡️', v:Math.round(base - 60), txt:Ts <= -15 ? 'Neige très froide et dure (surface ' + tf(Ts) + ')' : Ts <= -6 ? 'Neige froide et ferme (surface ' + tf(Ts) + ')' :
+      Ts <= -1 ? 'Neige près du point de fonte (surface ' + tf(Ts) + ')' : 'Surface à 0° : la neige ramollit'});
+    if (wet >= 0.08) { const p = -35 * wet; s += p; F.push({ico:'💧', v:Math.round(p), txt:wet < 0.3 ? 'Neige un peu humide' : wet < 0.7 ? 'Neige mouillée, collante' : 'Neige détrempée (slush)'}); }
+    if (fresh >= 0.3) { const p = -45 * (1 - Math.exp(-fresh / 3)); s += p; F.push({ico:'❄️', v:Math.round(p), txt:'Neige fraîche non tassée ≈ ' + cm(fresh)}); }
+    if (sn >= 0.2) { const p = -Math.min(8, sn * 5); s += p; F.push({ico:'🌨️', v:Math.round(p), txt:'Neige en cours ' + cm(sn) + '/h'}); }
+    const cover = 1 - Math.exp(-fresh / 1.5), iceEff = ice * (1 - cover);
+    if (ice >= 0.1 && 25 * iceEff >= 0.5) { const p = 25 * iceEff; s += p; F.push({ico:'🧊', v:Math.round(p), txt:cover > 0.5 ? 'Croûte glacée sous la neige fraîche' : 'Croûte glacée (regel ou verglas)'}); }
+    if (fresh < 0.5 && wet < 0.3) { const p = 6 * Math.min(1, age / 72) * (1 - wet); if (p >= 1) { s += p; F.push({ico:'⏳', v:Math.round(p), txt:'Neige tassée depuis ' + (age >= 48 ? Math.floor(age / 24) + ' jours' : Math.round(age) + ' h')}); } }
+    if ((h.ws || 0) >= 30 && T <= -2 && (fresh >= 1 || sn > 0 || snow48 >= 3)) { const p = (h.wg || 0) >= 60 ? -8 : -6; s += p; F.push({ico:'💨', v:p, txt:'Vent : neige soufflée dans les couloirs'}); }
+    s = clamp(Math.round(s), 3, 100);
+    out.push({s, lv:glv(s), F, ice:iceEff >= 0.35, wet, fresh, iceRaw:ice, Ts, age});
+  }
+  GCACHE.set(H, out);
+  return out;
+}
+function glideAt(H, i) { return glideSeries(H)[i] || null; }
+const RISK = [
+  {min:-9,  n:'Faible',     cls:'ok',   frost:'Peu probable', txt:'Inconfort léger.'},
+  {min:-27, n:'Modéré',     cls:'yel',  frost:'Peu probable', txt:'Risque d\'hypothermie lors d\'une longue exposition.'},
+  {min:-39, n:'Élevé',      cls:'warn', frost:'10 à 30 min',  txt:'La peau exposée peut geler en 10 à 30 minutes.'},
+  {min:-47, n:'Très élevé', cls:'bad',  frost:'5 à 10 min',   txt:'La peau exposée peut geler en 5 à 10 minutes.'},
+  {min:-54, n:'Grave',      cls:'bad',  frost:'2 à 5 min',    txt:'La peau exposée peut geler en 2 à 5 minutes.'},
+  {min:-999, n:'Extrême',   cls:'bad',  frost:'< 2 min',      txt:'La peau exposée peut geler en moins de 2 minutes.'}
+];
+const riskOf = wc => wc == null ? null : RISK.find(r => Math.round(wc) >= r.min);
+const uvTxt = u => u == null ? '' : u < 3 ? 'faible' : u < 6 ? 'modéré' : u < 8 ? 'élevé' : 'très élevé';
+function schedFor(ms) {
+  const k = ymd(ms).slice(5), wd = lp(ms).wd;
+  for (const r of HORAIRE) if (k >= r.du && k <= r.au) { const v = r.j ? r.j[wd] : r.h; return {o:v ? v[0] : null, f:v ? v[1] : null, note:r.note || '', tbc:!!r.tbc}; }
+  return null;
+}
+function schedMs(ms) {
+  const s = schedFor(ms); if (!s || s.o == null) return s;
+  const p = lp(ms); return Object.assign({}, s, {om:localMs(p.y, p.mo, p.d, s.o, 0), fm:localMs(p.y, p.mo, p.d, s.f, 0)});
+}
+function nextOpen(ms) {
+  for (let d = 1; d <= 60; d++) { const p = lp(ms + d * 24 * HOUR), t = localMs(p.y, p.mo, p.d, 12, 0), s = schedMs(t); if (s && s.o != null) return s; }
+  return null;
+}
+const hrsTxt = s => s.o + ' h – ' + s.f + ' h';
+
+/* ===================== Modèle de vue ===================== */
+function series() {
+  if (DEV.unlocked && DEV.sim) return simData();
+  const now = NOW(), covers = H => H && H.length && H[0].t <= now + HOUR && H[H.length - 1].t >= now - HOUR;
+  if (D.om && D.om.d && covers(D.om.d.H)) return D.om.d;
+  if (D.ec && D.ec.d && D.ec.d.hf && D.ec.d.hf.length && D.ec.d.hf[D.ec.d.hf.length - 1].t > now) {
+    const e = D.ec.d, c = e.cur;
+    const H = e.hf.map(h => ({t:h.t, T:h.T, RH:null, ws:h.ws, wg:null, wc:ecToWmo(h.icon), pp:h.lop, sn:null, rain:null, day:null, sw:null, vis:null, uv:null, cond:h.cond}));
+    const C = c && c.T != null ? {t:c.t, T:c.T, RH:c.RH, ws:c.ws, wg:c.wg, wd:c.wd, wc:ecToWmo(c.icon), label:c.cond, sn:null, rain:null, p:c.p != null ? c.p * 10 : null} : null;
+    const today = H.filter(x => ymd(x.t) === ymd(NOW()));
+    const DY = [{t:NOW(), rise:e.rise, set:e.set, Tmax:maxK(today, 'T'), Tmin:today.length ? Math.min(...today.map(x => x.T)) : null}];
+    return {H, C, DY, src:'Environnement Canada (secours)', lim:true};
+  }
+  return null;
+}
+function build() {
+  const now = NOW(), S = series(), V = {now, S, src:S ? S.src : null};
+  const H = S ? S.H : [];
+  let i0 = -1; for (let i = 0; i < H.length; i++) if (H[i].t <= now) i0 = i;
+  if (i0 < 0 && H.length && H[0].t - now < HOUR) i0 = 0;
+  V.i0 = i0;
+  const hi = i0 >= 0 ? H[i0] : null;
+  /* Conditions actuelles */
+  if (hi) {
+    const C = (S.C && Math.abs(S.C.t - now) < 3 * HOUR) ? S.C : hi;
+    const T = C.T != null ? C.T : hi.T, ws = C.ws != null ? C.ws : hi.ws, wg = C.wg != null ? C.wg : hi.wg;
+    const code = C.wc != null ? C.wc : hi.wc, day = C.day != null ? C.day : hi.day, w = wmo(code, day);
+    V.cur = {T, ws, wg, wd:C.wd != null ? C.wd : hi.wd, RH:C.RH != null ? C.RH : hi.RH, code, label:C.label || w.label, emoji:w.emoji, vis:hi.vis, cc:C.cc != null ? C.cc : hi.cc,
+      p:C.p, Td:hi.Td, feel:windChill(T, ws), sn:C.sn != null ? C.sn : hi.sn, rain:C.rain != null ? C.rain : hi.rain, uv:hi.uv, sd:hi.sd};
+    if (T != null && T > 20 && C.app != null) V.cur.feel = C.app;
+  }
+  const dk = ymd(now), today = S && S.DY ? (S.DY.find(d => ymd(d.t + 12 * HOUR) === dk || ymd(d.t) === dk) || null) : null;
+  V.today = today || {};
+  const ec = D.ec && D.ec.d;
+  V.rise = V.today.rise || (ec && ec.rise) || null; V.set = V.today.set || (ec && ec.set) || null;
+  if (V.rise && ymd(V.rise) !== dk) V.rise = null; if (V.set && ymd(V.set) !== dk) V.set = null;
+  /* Glisse estimée */
+  if (hi) {
+    const g = glideAt(H, i0); V.glide = g;
+    const nx = []; for (let i = i0; i <= Math.min(H.length - 1, i0 + 24); i++) { const x = glideAt(H, i); if (x) nx.push({t:H[i].t, s:x.s, lv:x.lv, ice:x.ice}); }
+    V.glideH = nx;
+    if (g && nx.length > 3) {
+      const d = nx[3].s - g.s; V.glTrend = d >= 7 ? {a:'↗', n:'Accélère'} : d <= -7 ? {a:'↘', n:'Ralentit'} : {a:'→', n:'Stable'};
+      const ch = nx.slice(1, 13).find(x => x.lv.k !== g.lv.k); V.glChange = ch ? {t:ch.t, lv:ch.lv} : null;
+    }
+    const g3 = nx[3];
+    if (g) V.sect = SECT.map(x => ({n:x.n, lv:glv(adj(g.s, x.dv)), lv3:g3 ? glv(adj(g3.s, x.dv)) : null}));
+  }
+  /* Déneigement */
+  if (hi) {
+    const past = H.filter(x => x.t > now - 24 * HOUR && x.t <= now), p6 = past.filter(x => x.t > now - 6 * HOUR), p12 = past.filter(x => x.t > now - 12 * HOUR);
+    const fut = H.filter(x => x.t > now && x.t <= now + 24 * HOUR), f12 = fut.filter(x => x.t <= now + 12 * HOUR), f6 = fut.filter(x => x.t <= now + 6 * HOUR);
+    const c = V.cur, sn = {};
+    sn.p6 = sumK(p6, 'sn'); sn.p24 = sumK(past, 'sn'); sn.n6 = sumK(f6, 'sn'); sn.n12 = sumK(f12, 'sn'); sn.n24 = sumK(fut, 'sn');
+    sn.rate = c.sn; sn.snowing = (c.sn != null && c.sn >= 0.1) || SNOWC.includes(c.code);
+    const st = fut.find(x => (x.sn || 0) >= 0.1 || (x.sn == null && SNOWC.includes(x.wc)));
+    sn.start = (!sn.snowing && st) ? st.t : null;
+    if (sn.snowing || st) { const from = sn.snowing ? 0 : fut.indexOf(st); let e = null; for (let j = from; j < fut.length; j++) if (!((fut[j].sn || 0) >= 0.1)) { e = fut[j].t; break; } sn.end = e; }
+    sn.frzNow = FRZ.includes(c.code); sn.frzPast = p6.some(x => FRZ.includes(x.wc)); sn.frzNext = f12.some(x => FRZ.includes(x.wc));
+    sn.rainNow = RAINC.includes(c.code) || (c.rain || 0) >= 0.2; sn.rainN12 = sumK(f12, 'rain');
+    const thaw = (maxK(p12, 'T') != null && maxK(p12, 'T') >= 0.5) || (sumK(p12, 'rain') || 0) >= 0.5;
+    sn.iceNow = c.T != null && c.T <= -0.5 && thaw;
+    sn.refreeze = null; if (c.T != null && c.T > 0) { const r = f12.find(x => x.T != null && x.T <= -0.5); if (r) sn.refreeze = r.t; }
+    sn.poudNow = c.T != null && c.T <= -3 && ((c.ws || 0) >= 30 || (c.wg || 0) >= 50) && ((sn.p24 || 0) >= 2 || sn.snowing);
+    let cum = sn.p24 || 0; sn.poudNext = null;
+    for (const x of f12) { cum += x.sn || 0; if (!sn.poudNow && x.T <= -3 && ((x.ws || 0) >= 30 || (x.wg || 0) >= 50) && cum >= 2) { sn.poudNext = x.t; break; } }
+    sn.depth = c.sd != null ? c.sd * 100 : null;
+    let lv = 'ok';
+    if ((sn.n12 || 0) >= 1 || sn.frzNext || sn.poudNext || sn.refreeze || (sn.p24 || 0) >= 5) lv = 'warn';
+    if ((sn.p6 || 0) >= 2 || (sn.rate || 0) >= 0.5 || sn.frzNow || sn.frzPast || sn.iceNow || sn.poudNow) lv = 'bad';
+    sn.lv = lv; sn.lvTxt = lv === 'bad' ? 'Élevé' : lv === 'warn' ? 'Moyen' : 'Faible';
+    const A = [];
+    if (sn.frzNow || sn.frzPast) A.push('Verglas : glace sur escaliers, allées et quais (pic à glace / pelle)');
+    else if (sn.iceNow) A.push('Regel : allées et escaliers glacés (pic à glace / pelle)');
+    if ((sn.rate || 0) >= 0.5 || (sn.p6 || 0) >= 2) A.push('Accumulation sur allées, escaliers, quais de tapis et stationnement');
+    else if (sn.snowing) A.push('Neige faible sur escaliers et quais de tapis');
+    if (sn.poudNow) A.push('Poudrerie : congères aux accès et fins de piste');
+    if (sn.start) A.push('Neige dès ' + hh(sn.start) + ' (≈ ' + cm(sn.n12) + ' en 12 h)');
+    if (sn.refreeze) A.push('Regel vers ' + hh(sn.refreeze) + ' : surfaces mouillées glacées (pic à glace / pelle)');
+    if (sn.frzNext && !sn.frzNow) A.push('Verglas prévu dans les 12 h (pic à glace / pelle)');
+    if (sn.poudNext) A.push('Poudrerie possible vers ' + hh(sn.poudNext));
+    if ((sn.p24 || 0) >= 5 && !A.length) A.push(cm(sn.p24) + ' tombés en 24 h : bords de pistes, sorties de tapis et dépôt à tubes enneigés');
+    if (!A.length) A.push(S.lim ? 'Données de neige limitées (mode secours)' : 'Conditions sèches');
+    sn.A = A; V.snow = sn;
+  }
+  /* Froid et sécurité */
+  if (hi) {
+    const c = V.cur, co = {wc:c.feel, risk:riskOf(c.feel)};
+    const fut = H.filter(x => x.t > now && x.t <= now + 12 * HOUR && x.T != null);
+    let w = null; for (const x of fut) { const v = windChill(x.T, x.ws); if (w == null || v < w.v) w = {v, t:x.t}; }
+    co.worst = w; co.uv = c.uv; co.uvmax = V.today.uv != null ? V.today.uv : maxK(H.filter(x => ymd(x.t) === dk), 'uv');
+    V.cold = co;
+  }
+  /* Journée : horaire, soleil, fabrication de neige */
+  const sc = schedMs(now), dy = {s:sc};
+  if (!sc) { const n = nextOpen(now); dy.state = 'Hors saison'; dy.cls = 'mutebg'; dy.txt = n ? (n.tbc ? 'Ouverture de la saison à confirmer' : 'Prochaine ouverture : ' + dateTxt(n.om)) : 'Saison terminée'; }
+  else if (sc.o == null) { const n = nextOpen(now); dy.state = 'Fermé auj.'; dy.cls = 'mutebg'; dy.txt = n ? 'Prochaine ouverture : ' + dateTxt(n.om) + ' ' + n.o + ' h' : ''; }
+  else if (now < sc.om) { dy.state = 'Avant ouverture'; dy.cls = 'info'; dy.lbl = 'Ouverture dans'; dy.cd = dur(sc.om - now); }
+  else if (now < sc.fm) { dy.state = 'Ouvert'; dy.cls = 'ok'; dy.lbl = 'Fermeture dans'; dy.cd = dur(sc.fm - now); }
+  else { const n = nextOpen(now); dy.state = 'Terminé'; dy.cls = 'mutebg'; dy.lbl = 'Prochaine ouverture'; dy.cd = n ? (ymd(n.om) === ymd(now + 24 * HOUR) ? 'demain ' + n.o + ' h' : dateTxt(n.om)) : '—'; }
+  if (V.set) dy.light = {lbl:'Coucher · noirceur', v:hm(V.set) + ' · ' + hm(V.set + 30 * 60000)};
+  /* Fabrication de neige : se fait la nuit, de la fermeture à l'ouverture du lendemain */
+  if (hi) {
+    dy.tw = wetBulb(V.cur.T, V.cur.RH);
+    const p0 = lp(now), oT = sc && sc.om ? sc.om : localMs(p0.y, p0.mo, p0.d, 9, 0), cT = sc && sc.fm ? sc.fm : localMs(p0.y, p0.mo, p0.d, 17, 0);
+    let st, en;
+    if (now < oT && p0.h < 12) { st = now; en = oT; }
+    else { st = Math.max(now, cT); const q = lp(now + 24 * HOUR), ns = schedMs(localMs(q.y, q.mo, q.d, 12, 0)); en = ns && ns.om ? ns.om : localMs(q.y, q.mo, q.d, 8, 0); }
+    const nh = H.filter(x => x.t >= Math.floor(st / HOUR) * HOUR && x.t < en).map(x => ({t:x.t, tw:wetBulb(x.T, x.RH)})).filter(x => x.tw != null);
+    const good = nh.filter(x => x.tw <= -4), exc = nh.filter(x => x.tw <= -7);
+    let q = null;
+    if (nh.length) q = exc.length >= nh.length / 2 ? {n:'Excellente', cls:'c-ok'} : good.length >= nh.length / 2 ? {n:'Bonne', cls:'c-ok'} :
+      good.length >= 2 ? {n:'Partielle', cls:'c-warn'} : nh.some(x => x.tw <= -2) ? {n:'Marginale', cls:'c-warn'} : {n:'Impossible', cls:'mute'};
+    dy.night = {st, en, q, hours:nh, win:good.length ? hh(good[0].t) + ' → ' + hh(good[good.length - 1].t + HOUR) : null};
+    dy.snm = q;
+  }
+  V.day = dy;
+  /* Glisse sur les heures d'ouverture du jour (sinon les 9 prochaines heures) */
+  if (V.glideH && V.glideH.length) {
+    let tl = (sc && sc.om != null && now < sc.fm) ? V.glideH.filter(x => x.t >= (now < sc.om ? sc.om : now - HOUR) && x.t < sc.fm) : [];
+    V.glDayOpen = tl.length > 1;
+    if (!V.glDayOpen) tl = V.glideH.slice(0, 9);
+    V.glDay = tl.slice(0, 12);
+  }
+  /* Site officiel : état des zones seulement (les vitesses viennent de la météo) */
+  let site = D.site;
+  if (DEV.unlocked && DEV.sim) site = simSite();
+  V.site = site;
+  if (site && site.d) {
+    const d = site.d, st = norm(d.statut);
+    V.siteOpen = (d.pistes && d.pistes.o > 0) ? true : /ferm|closed/.test(st) ? false : /ouvert|open/.test(st) ? true : null;
+    if (V.siteOpen === false && dy.state === 'Ouvert') { dy.state = 'Fermé (site)'; dy.cls = 'bad'; dy.lbl = null; dy.txt = 'Le site officiel indique fermé'; }
+    V.siteStatut = /is closed|are closed/i.test(d.statut) ? 'Les Glissades sont fermées pour le moment.' : /is open|are open/i.test(d.statut) ? 'Les Glissades sont ouvertes.' : d.statut;
+  }
+  /* Zones + mesures du chrono */
+  const log = LS.get('gpdh.log', []);
+  const g0 = V.glide, g3 = V.glideH && V.glideH[3];
+  V.zones = ZONES.map(z => {
+    const live = site && site.d && site.d.zones[z.id], es = g0 ? adj(g0.s, z.dv) : null;
+    const m = log.find(e => e.z === z.id && e.kmh && now - e.t < 3 * HOUR);
+    return Object.assign({}, z, {live, es, est:es != null ? glv(es) : null, est3:g3 ? glv(adj(g3.s, z.dv)) : null,
+      closed:!!(live && live.fr && live.fr.o === 0), meas:m ? Math.round(m.kmh) : null});
+  });
+  plan(V, H, now);
+  /* Puces d'alerte */
+  const ch = [];
+  const al = D.al && D.al.d ? D.al.d.filter(a => !a.exp || a.exp > now) : [];
+  V.alerts = al;
+  for (const a of al) ch.push({cls:a.col === 'red' ? 'bad' : a.col === 'orange' ? 'warn' : a.col === 'yellow' ? 'yel' : a.type === 'warning' ? 'bad' : a.type === 'watch' ? 'warn' : 'yel', txt:'⚠ ' + a.nom});
+  if (V.cur) {
+    const c = V.cur, sn = V.snow || {};
+    if (sn.frzNow) ch.push({cls:'bad', txt:'🧊 Verglas en cours'});
+    else if (sn.iceNow) ch.push({cls:'warn', txt:'🧊 Surfaces glacées'});
+    if (sn.snowing) ch.push({cls:'info', txt:'❄ Neige en cours' + (c.sn >= 0.1 ? ' ' + cm(c.sn) + '/h' : '')});
+    else if (sn.start && sn.start - now <= 6 * HOUR) ch.push({cls:'info', txt:'❄ Neige dès ' + hh(sn.start)});
+    if (sn.rainNow && !sn.frzNow) ch.push({cls:'info', txt:'🌧 Pluie'});
+    if (sn.refreeze) ch.push({cls:'warn', txt:'🧊 Regel ' + hh(sn.refreeze)});
+    if (sn.poudNow) ch.push({cls:'warn', txt:'💨 Poudrerie'});
+    if ((c.wg || 0) >= 50) ch.push({cls:c.wg >= 70 ? 'bad' : 'warn', txt:'💨 Rafales ' + n0(c.wg)});
+    if (c.vis != null && c.vis < 1000) ch.push({cls:'warn', txt:'🌫 Visibilité ' + visTxt(c.vis)});
+    if (c.feel != null && Math.round(c.feel) <= -28) ch.push({cls:Math.round(c.feel) <= -40 ? 'bad' : 'warn', txt:'🥶 Gelures ' + riskOf(c.feel).frost});
+    if (V.glide && V.glide.ice) ch.push({cls:'warn', txt:'⚡ Glisse glacée'});
+  }
+  if (!ch.length) ch.push({cls:'ok', txt:V.cur ? '✓ Aucune alerte' : 'Chargement des données…'});
+  V.chips = ch;
+  return V;
+}
+
+/* ===================== Déductions pour la journée aux Glissades ===================== */
+function plan(V, H, now) {
+  const g = V.glide, sn = V.snow || {}, c = V.cur, dy = V.day || {}, sc = dy.s;
+  const close = sc && sc.fm ? sc.fm : now + 8 * HOUR;
+  const work = H.filter(x => x.T != null && x.t >= now - HOUR && x.t <= Math.max(close, now + 4 * HOUR));
+  /* Heures où la peau exposée peut geler en moins de 30 min (ressenti ≤ −28) */
+  const fz = work.filter(x => x.t >= now - HOUR && Math.round(windChill(x.T, x.ws)) <= -28);
+  V.frost = fz.length ? hh(fz[0].t) + ' → ' + hh(fz[fz.length - 1].t + HOUR) : 'aucune';
+  /* Achalandage prévu (type de journée + météo pendant les heures d'ouverture) */
+  V.crowd = null;
+  if (sc && sc.o != null) {
+    const p = lp(now), note = sc.note || '';
+    let b, why;
+    if (/Fêtes/.test(note)) { b = 85; why = 'Temps des Fêtes'; }
+    else if (/relâche/.test(note)) { b = 90; why = 'Semaine de relâche'; }
+    else if (p.wd === 6) { b = 75; why = 'Samedi'; }
+    else if (p.wd === 0) { b = 65; why = 'Dimanche'; }
+    else if (p.mo === 12 && p.d >= 20) { b = 50; why = 'Vacances scolaires'; }
+    else { b = 25; why = 'Jour de semaine (groupes scolaires possibles)'; }
+    if (sc.tbc) { b -= 10; why += ', début de saison'; }
+    const oh = H.filter(x => x.T != null && x.t >= sc.om && x.t < sc.fm), A = [];
+    if (oh.length) {
+      const feel = oh.reduce((a, x) => a + windChill(x.T, x.ws), 0) / oh.length, Tm = oh.reduce((a, x) => a + x.T, 0) / oh.length;
+      const sun = oh.filter(x => x.cc != null && x.cc < 50).length / oh.length, snow = sumK(oh, 'sn') || 0;
+      if (oh.some(x => FRZ.includes(x.wc))) A.push(['verglas', -35]);
+      else if (oh.some(x => (x.rain || 0) >= 0.3 && x.T > 0)) A.push(['pluie', -30]);
+      if (feel <= -25) A.push(['grand froid', -25]); else if (feel <= -18) A.push(['froid', -12]);
+      if (snow >= 8) A.push(['tempête, routes', -12]);
+      if (Tm > 6) A.push(['neige molle', -10]);
+      if (!A.length && feel > -15 && Tm < 3 && sun >= 0.5) A.push(['beau temps', 8]);
+    }
+    const s = clamp(b + A.reduce((a, x) => a + x[1], 0), 0, 100);
+    V.crowd = Object.assign(s < 30 ? {n:'Faible', cls:'ok'} : s < 55 ? {n:'Modéré', cls:'yel'} : s < 78 ? {n:'Élevé', cls:'warn'} : {n:'Très élevé', cls:'bad'},
+      {s, why:why + (A.length ? ' · ' + A.map(x => x[0]).join(', ') : ''), peak:'11 h – 14 h' + (sc.f >= 20 ? ' et 18 h – 20 h' : '')});
+  }
+  /* Pistes et équipements : conditions prévues, par importance */
+  const P = [], add = (pr, ico, txt) => P.push({p:pr, ico, txt});
+  const later = (V.glDay || []).filter(x => x.t > now);
+  if (g) {
+    if (g.ice) add(1, '🧊', 'Pistes glacées : glisse très rapide jusqu\'en fin de piste');
+    else if (g.lv.k === 4) add(1, '⚡', 'Glisse très rapide : les embarcations vont plus loin en fin de piste');
+    else { const f = later.find(x => x.lv.k === 4 || x.ice); if (f) add(2, '⚡', 'Glisse très rapide dès ' + hh(f.t)); }
+  }
+  if ((sn.rate || 0) >= 0.3) add(1, '❄️', 'Neige ' + cm(sn.rate) + '/h : couloirs et sorties de tapis se recouvrent' + (sn.rate >= 1 ? ' rapidement' : ''));
+  else if (sn.start && sn.start < close) add(2, '❄️', 'Neige dès ' + hh(sn.start) + ' : la glisse va ralentir');
+  if ((sn.p6 || 0) >= 2) add(1, '🚜', 'Neige fraîche ' + cm(sn.p6) + ' en 6 h : couloirs mous, glisse ralentie');
+  else if ((sn.p24 || 0) >= 3) add(2, '🚜', cm(sn.p24) + ' tombés en 24 h : couloirs plus lents');
+  const gx = Math.max(c && c.wg || 0, maxK(work.filter(x => x.t <= close), 'wg') || 0);
+  if (gx >= 60) add(1, '💨', 'Rafales jusqu\'à ' + n0(gx) + ' km/h : télérafting, tubes et objets légers exposés');
+  if (c && (c.ws || 0) >= 35 && ((sn.p24 || 0) >= 1 || sn.snowing)) add(2, '💨', 'Neige soufflée : accumulations possibles dans les couloirs, bermes et quais');
+  if (sn.frzNow || sn.frzPast || sn.frzNext) add(1, '🧊', 'Verglas : glace possible sur les tapis roulants et les quais');
+  if (sn.rainNow) add(2, '🌧️', 'Pluie : neige lourde, glisse lente' + (sn.refreeze ? '; regel vers ' + hh(sn.refreeze) + ' (glace)' : ''));
+  else if (sn.refreeze) add(2, '🧊', 'Regel vers ' + hh(sn.refreeze) + ' : pistes glacées en soirée et demain matin');
+  if (!sn.rainNow && work.some(x => x.t > now && x.t < close && x.T > 1 && (x.sw || 0) > 300)) add(3, '☀️', 'Neige molle en après-midi : ornières et bosses probables');
+  if (V.set && sc && sc.fm && sc.fm > V.set) add(3, '🌙', 'Noirceur vers ' + hm(V.set + 30 * 60000) + ', ouvert jusqu\'à ' + sc.f + ' h');
+  if (dy.night && dy.night.q && dy.night.win) add(3, '🌨️', 'Fabrication de neige cette nuit : ' + dy.night.q.n.toLowerCase() + ' (' + dy.night.win + ')');
+  if (!P.length && c) add(3, '✓', 'Conditions stables');
+  P.sort((a, b) => a.p - b.p); V.pistes = P;
+}
+
+/* ===================== Rendu ===================== */
+let VM = null;
+const ICO = {
+  hours:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+  radar:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12l6-6"/></svg>',
+  chrono:'<svg viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.5 2M9.5 3h5M12 3v3"/></svg>',
+  alert:'<svg viewBox="0 0 24 24"><path d="M12 3.5l9 16H3z"/><path d="M12 10v4.5M12 17.4v.2"/></svg>',
+  gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.6M12 18.6v2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M2.8 12h2.6M18.6 12h2.6M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"/></svg>',
+  refresh:'<svg viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4.8h-4.8"/></svg>'
+};
+const ABZ = {1:'Lente', 2:'Modér.', 3:'Rapide', 4:'T.rap.'};
+function applyTheme() {
+  let th = SET.theme;
+  if (th === 'auto') {
+    const n = NOW(), r = VM && VM.rise, s = VM && VM.set;
+    th = (r && s) ? ((n < r || n > s) ? 'dark' : 'light') : (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+  document.documentElement.dataset.theme = th;
+  document.documentElement.style.setProperty('--scale', SET.scale);
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = th === 'dark' ? '#05080f' : '#eef2f8';
+}
+function renderHeader() {
+  const V = VM || {}, now = NOW(), p = lp(now);
+  let pill = '…', cls = 'var(--s0)';
+  const dy = V.day || {}, so = V.siteOpen;
+  if (so === true) { pill = 'Ouvert' + (dy.s && dy.s.f ? ' · ferme ' + dy.s.f + ' h' : ''); cls = 'var(--ok)'; }
+  else if (so === false) { pill = 'Fermé' + (dy.state === 'Fermé (site)' ? ' (site)' : dy.state === 'Avant ouverture' ? ' · ouvre ' + dy.s.o + ' h' : dy.state === 'Hors saison' ? ' · hors saison' : ''); cls = dy.state === 'Fermé (site)' ? 'var(--bad)' : 'var(--s0)'; }
+  else if (dy.state) { pill = dy.state + (dy.state === 'Ouvert' ? ' (horaire)' : ''); cls = dy.state === 'Ouvert' ? 'var(--ok)' : 'var(--s0)'; }
+  const ts = [D.om && D.om.t, D.ec && D.ec.t, D.site && D.site.t].filter(Boolean), last = ts.length ? Math.max(...ts) : null;
+  const stale = !last || Date.now() - last > 45 * 60000;
+  $('#hdr').innerHTML = '<div class="hdl"><small>Glissades PDH' + (DEV.unlocked && DEV.sim ? ' · <span class="simtag">SIM</span>' : '') + '</small><span class="clock">' + p.h + ':' + pad(p.mi) + '</span></div>' +
+    '<div class="hr"><span class="pill" style="background:' + cls + '" data-act="m-day">' + esc(pill) + '</span>' +
+    '<button class="upd' + (stale ? ' stale' : '') + (D.busy ? ' busy' : '') + '" data-act="refresh" aria-label="Actualiser">' + ICO.refresh + (last ? 'MAJ ' + hm(last) : 'Hors ligne') + '</button></div>' +
+    '<button class="ib" data-act="settings" aria-label="Réglages">' + ICO.gear + '</button>';
+}
+function renderChips() {
+  const c = VM.cur;
+  $('#chips').innerHTML = (c ? '<span class="chip" data-act="m-wx">' + c.emoji + ' ' + tf(c.T) + ' · ressenti ' + tf(c.feel) + '</span>' : (D.busy ? '<span class="chip">Chargement…</span>' : '')) +
+    VM.chips.filter(x => x.cls !== 'ok').map(x => '<span class="chip ' + x.cls + '">' + esc(x.txt) + '</span>').join('');
+}
+function fitNotes() {
+  const ul = $('#notes .nl'); if (!ul) return;
+  const li = [...ul.children]; li.forEach(x => { x.style.display = ''; });
+  const bottom = ul.getBoundingClientRect().bottom + 1; let cut = false, shown = 0;
+  for (const x of li) { if (!cut && x.getBoundingClientRect().bottom > bottom) cut = true; if (cut) x.style.display = 'none'; else shown++; }
+  const c = $('#notes .cnt'); if (c) c.textContent = shown < li.length ? shown + '/' + li.length + ' ›' : li.length;
+}
+const kv = (a, b, cls) => '<div class="kv' + (cls ? ' ' + cls : '') + '"><span>' + a + '</span><b>' + b + '</b></div>';
+function renderMain() {
+  const V = VM, g = V.glide, sn = V.snow, co = V.cold, dy = V.day || {};
+  /* Glisse + heure par heure */
+  const hero = $('#hero');
+  if (!g) {
+    hero.className = 'card hero l0';
+    hero.innerHTML = '<div class="hero-top"><div class="cap"><span>Vitesse de glisse</span></div><div class="hero-main"><span class="hero-lv">' + (D.busy ? 'Chargement…' : 'Indisponible') + '</span></div></div>';
+  } else {
+    const k = g.ice ? 'ice' : g.lv.k;
+    const f = g.F.filter(x => x.ico !== '🌡️').sort((a, b) => Math.abs(b.v) - Math.abs(a.v))[0] || g.F[0];
+    const sub = [V.glChange ? V.glChange.lv.n + ' vers ' + hh(V.glChange.t) : null, f ? f.txt : null].filter(Boolean).join(' · ');
+    const fs = parseFloat(getComputedStyle(document.documentElement).fontSize) || 14;
+    const n = clamp(Math.floor((hero.clientWidth || 340) / (fs * 2.85)), 6, 14);
+    let hs = '';
+    for (let i = 0; i < n; i++) {
+      const x = V.S.H[V.i0 + i], gh = V.glideH && V.glideH[i]; if (!x) break;
+      const cur = i === 0 && V.cur, w = wmo(cur ? V.cur.code : x.wc, x.day), T = cur ? V.cur.T : x.T;
+      const pr = (x.sn || 0) >= 0.1 ? '<span class="p">' + cm(x.sn).replace(' ', '') + '</span>' : (x.rain || 0) >= 0.1 ? '<span class="p rn">' + mm(x.rain).replace(' ', '') + '</span>' : '<span class="p no">·</span>';
+      hs += '<div class="hc"><b>' + (i === 0 ? 'Mtn' : lp(x.t).h + 'h') + '</b><span class="e">' + w.emoji + '</span><i class="k' + (gh ? (gh.ice ? 'ice' : gh.lv.k) : 0) + '"></i><span class="T">' + tf(T) + '</span>' + pr + '</div>';
+    }
+    hero.className = 'card hero l' + k;
+    hero.innerHTML = '<div class="hero-top"><div class="cap"><span>Vitesse de glisse · météo</span>' + (g.ice ? '<span class="tag">GLACÉE</span>' : '') + '</div>' +
+      '<div class="hero-main"><span class="hero-lv">' + g.lv.n + '</span>' + (V.glTrend ? '<span class="hero-trend">' + V.glTrend.a + ' ' + V.glTrend.n.toLowerCase() + '</span>' : '') + '</div>' +
+      '<div class="hero-sub">' + esc(sub) + '</div></div>' +
+      '<div class="hero-bot"><div class="sects">' + (V.sect || []).map(x => '<div class="sect"><span>' + (x.n === 'Intermédiaire' ? 'Interm.' : x.n) + '</span><b class="lvp k' + x.lv.k + '">' + x.lv.n + '</b></div>').join('') + '</div>' +
+      (hs ? '<div class="hs" data-act="m-hours" style="--n:' + n + '">' + hs + '</div>' : '') + '</div>';
+  }
+  /* Zones */
+  $('#zones').innerHTML = (V.zones || []).map(z => '<div class="zc k' + (z.est ? z.est.k : 0) + (z.closed ? ' cl' : '') + '" data-act="zone" data-id="' + z.id + '"><b>' + z.c + '</b><span>' + (z.est ? ABZ[z.est.k] : '—') + '</span></div>').join('') +
+    '<div class="zc leg" data-act="m-glide"><b>ⓘ</b><span>Zones</span></div>';
+  /* À noter : pistes et équipements */
+  const N = (V.pistes || []).filter(x => x.ico !== '✓');
+  $('#notes').innerHTML = '<div class="cap"><span>À noter</span>' + (N.length ? '<span class="cnt">' + N.length + '</span>' : '') + '</div><ul class="nl">' +
+    (N.length ? N.map(x => '<li class="p' + x.p + '"><i></i><span>' + esc(x.txt) + '</span></li>').join('') : '<li class="p3"><i></i><span>' + (V.cur ? 'Conditions stables' : D.busy ? 'Chargement…' : 'Données indisponibles') + '</span></li>') + '</ul>';
+  /* Déneigement */
+  $('#t-sn').innerHTML = !sn ? '<div class="cap"><span>Déneigement</span></div><div class="kvs">' + kv('Données', '—') + '</div>' :
+    '<div class="cap"><span>Déneigement</span><span class="badge ' + sn.lv + '">' + sn.lvTxt + '</span></div><div class="kvs">' +
+    (sn.snowing ? kv('Neige en cours', sn.rate != null ? cm(sn.rate) + '/h' : 'oui', 'c-info') : '') +
+    kv('Tombé 24 h', cm(sn.p24)) + kv('Prévu 12 h', cm(sn.n12) + (sn.start ? ' · ' + hh(sn.start) : '')) +
+    kv('Verglas', sn.frzNow ? 'EN COURS' : sn.frzPast ? 'récent' : sn.iceNow ? 'glace (regel)' : sn.frzNext ? 'prévu' : sn.refreeze ? 'regel ' + hh(sn.refreeze) : 'non', (sn.frzNow || sn.frzPast || sn.iceNow) ? 'c-bad' : (sn.frzNext || sn.refreeze) ? 'c-warn' : '') +
+    (sn.snowing ? '' : kv('Poudrerie', sn.poudNow ? 'oui' : sn.poudNext ? hh(sn.poudNext) : 'non', sn.poudNow ? 'c-warn' : '')) + '</div>';
+  fitNotes();
+  /* Ressenti */
+  $('#t-co').innerHTML = (!co || !co.risk) ? '<div class="cap"><span>Ressenti</span></div><div class="v">—</div>' :
+    '<div class="cap"><span>Ressenti</span><span class="badge ' + co.risk.cls + '">' + co.risk.n + '</span></div><div class="v">' + tf(co.wc) + '</div>' +
+    '<div class="l">' + (co.risk.frost === 'Peu probable' ? 'Gelure peu probable' : 'Gelure : ' + co.risk.frost.replace(' à ', '–')) + '</div><div class="kvs">' +
+    (co.worst ? kv('Pire', tf(co.worst.v) + ' · ' + hh(co.worst.t)) : '') + kv('≤ −28°', V.frost || '—', V.frost && V.frost !== 'aucune' ? 'c-warn' : '') +
+    (V.today && V.today.Tmin != null ? kv('Min / max', tf(V.today.Tmin) + ' / ' + tf(V.today.Tmax), 'opt') : '') + '</div>';
+  /* Journée */
+  let big, line;
+  if (dy.lbl === 'Fermeture dans') { big = dy.cd; line = 'avant la fermeture'; }
+  else if (dy.lbl === 'Ouverture dans') { big = dy.cd; line = 'avant l\'ouverture'; }
+  else if (dy.state === 'Terminé') { big = 'Terminé'; line = 'Prochaine : ' + dy.cd; }
+  else if (dy.state === 'Fermé (site)') { big = 'Fermé'; line = 'selon le site officiel'; }
+  else { big = dy.state === 'Hors saison' ? 'Hors saison' : 'Fermé'; line = dy.txt || ''; }
+  $('#t-dy').innerHTML = '<div class="cap"><span>Journée</span>' + (dy.state && dy.state !== big ? '<span class="badge ' + (dy.cls || '') + '">' + dy.state + '</span>' : '') + '</div>' +
+    '<div class="v' + (String(big).length > 7 ? ' sm' : '') + '">' + esc(big || '—') + '</div><div class="l">' + esc(line) + '</div><div class="kvs">' +
+    kv('Horaire', dy.s ? (dy.s.o != null ? hrsTxt(dy.s) : 'fermé') : '—') +
+    (V.crowd ? kv('Achalandage', V.crowd.n.toLowerCase(), 'c-' + V.crowd.cls) : '') +
+    (V.set ? kv('Noirceur', hm(V.set + 30 * 60000), 'opt') : '') +
+    (dy.snm ? kv('Neige artif. nuit', dy.snm.n.toLowerCase(), dy.snm.cls) : '') + '</div>';
+}
+function renderNav() {
+  const nal = VM.alerts ? VM.alerts.length : 0;
+  $('#ftr').innerHTML = '<button class="nb" data-act="m-hours">' + ICO.hours + '<span>24 h</span></button>' +
+    '<button class="nb" data-act="radar">' + ICO.radar + '<span>Radar</span></button>' +
+    '<button class="nb" data-act="chrono">' + ICO.chrono + '<span>Chrono</span></button>' +
+    '<button class="nb" data-act="alerts">' + ICO.alert + '<span>Alertes</span>' + (nal ? '<em class="n">' + nal + '</em>' : '') + '</button>';
+}
+function render() {
+  try { VM = build(); } catch (e) { console.error(e); VM = VM || {chips:[{cls:'bad', txt:'Erreur : ' + e.message}], zones:[], day:{}, today:{}}; }
+  applyTheme(); renderHeader(); renderChips();
+  try { renderMain(); renderNav(); } catch (e) { console.error(e); }
+}
+
+/* ===================== Fenêtres de détail ===================== */
+function openModal(title, html) { $('#mt').textContent = title; $('#mb').innerHTML = html; $('#ov').classList.add('on'); }
+function closeModal() { $('#ov').classList.remove('on'); stopRadar(); }
+const R = (a, b, cls) => '<div class="r"><span>' + a + '</span><b class="' + (cls || '') + '">' + b + '</b></div>';
+
+function mWx() {
+  const V = VM, c = V.cur, e = D.ec && D.ec.d;
+  if (!c) return openModal('Météo', '<p>Données indisponibles.</p>');
+  const H = V.S.H, f6 = H.slice(V.i0 + 1, V.i0 + 7);
+  let h = '<div class="wx"><div class="big">' + tf(c.T) + '</div><div class="wx2"><b>' + c.emoji + ' ' + esc(c.label) + '</b><span>Refroidissement éolien <b>' + tf(c.feel) + '</b></span></div></div><div class="g2">' +
+    R('Vent', n0(c.ws) + ' km/h ' + dirTxt(c.wd)) + R('Rafales', n0(c.wg) + ' km/h') + R('Humidité', n0(c.RH) + ' %') + R('Point de rosée', tf(c.Td)) +
+    R('Nuages', n0(c.cc) + ' %') + R('Visibilité', visTxt(c.vis)) + R('Pression', c.p != null ? n0(c.p) + ' hPa' : '—') + R('Neige au sol*', c.sd != null ? cm(c.sd * 100) : '—') +
+    R('Min / max', tf(V.today.Tmin) + ' / ' + tf(V.today.Tmax)) + R('Précip. 6 h', mm(sumK(f6, 'pr'))) + R('Neige 6 h', cm(sumK(f6, 'sn'))) + R('Prob. max 6 h', f6.length && maxK(f6, 'pp') != null ? maxK(f6, 'pp') + ' %' : '—') + '</div>';
+  if (e && e.cur && e.cur.T != null) h += '<h4>Observé · ' + esc(e.cur.station || 'ECCC') + '</h4><div class="g2">' + R('Température', tf1(e.cur.T)) + R('Condition', esc(e.cur.cond || '—')) +
+    R('Vent', n0(e.cur.ws) + ' km/h ' + esc(e.cur.dirTxt || '')) + R('Heure', hm(e.cur.t)) + '</div>';
+  if (e && e.fc && e.fc.length) h += '<h4>Prévision Environnement Canada · ' + esc(e.nom) + '</h4>' + e.fc.slice(0, 2).map(f => '<p><b>' + esc(cap(f.n)) + ' :</b> ' + esc(f.txt) + '</p>').join('');
+  h += '<p class="mute" style="font-size:.7rem">Source : ' + esc(V.src) + ' (modèle au point exact du Domaine). *Neige au sol = estimation du modèle, pas la base des pistes.</p>';
+  openModal('Météo · Piedmont', h);
+}
+function mGlide() {
+  const V = VM, g = V.glide;
+  if (!g) return openModal('Vitesse de glisse', '<p>Données météo indisponibles.</p>');
+  let h = '<div class="gl"><span class="lv" style="color:var(--s' + g.lv.k + ')">' + g.lv.n + '</span><b>' + g.s + '/100</b>' +
+    (g.ice ? '<span class="badge kice">GLACÉE</span>' : '') + '<span class="mute">' + (V.glTrend ? V.glTrend.a + ' ' + V.glTrend.n + ' (3 h)' : '') + '</span></div>' +
+    '<h4>Facteurs météo</h4>' + g.F.map(f => '<div class="r"><span>' + f.ico + ' ' + esc(f.txt) + '</span><b class="' + (f.v > 0 ? 'c-bad' : f.v < 0 ? 'c-info' : '') + '">' + (f.v > 0 ? '+' : '') + f.v + '</b></div>').join('');
+  h += '<h4>Par zone · maintenant → dans 3 h</h4><table class="tbl"><tr><th>Zone</th><th>Mtn</th><th>+3 h</th><th>Zone</th><th>Mtn</th><th>+3 h</th></tr>';
+  for (let i = 0; i < V.zones.length; i += 2) {
+    h += '<tr>' + [V.zones[i], V.zones[i + 1]].map(z => z ? '<td data-act="zone" data-id="' + z.id + '"><b>' + esc(z.nom.replace('Parc du ', '')) + '</b></td><td>' + spB(z.est) + '</td><td>' + spB(z.est3) + '</td>' : '<td></td><td></td><td></td>').join('') + '</tr>';
+  }
+  h += '</table><h4>Heure par heure (indice général)</h4><div class="mini">' + (V.glideH || []).slice(0, 13).map(x => '<span class="k' + (x.ice ? 'ice' : x.lv.k) + '" style="font-size:.6rem">' + lp(x.t).h + 'h<br>' + x.s + '</span>').join('') + '</div>';
+  h += '<h4>Repères</h4><p style="font-size:.76rem"><span class="sp k1">Lente</span> <span class="sp k2">Modérée</span> <span class="sp k3">Rapide</span> <span class="sp k4">Très rapide</span> <span class="sp kice">Glacée</span><br>' +
+    '<b>Comment c\'est calculé.</b> L\'outil suit l\'état de la neige des couloirs heure par heure depuis 3 jours. Plus la neige est froide, plus elle est dure et rapide. ' +
+    'La neige mouillée (au-dessus de 0°, pluie, soleil près de 0°) ralentit fortement. La neige fraîche non tassée ralentit, puis se tasse en quelques heures avec le passage des tubes. ' +
+    'Quand une neige mouillée regèle, ou avec du verglas, une croûte glacée très rapide se forme, sauf si de la neige fraîche la recouvre. Après quelques jours sans neige, la neige est bien tassée et un peu plus rapide. ' +
+    'Le vent fort ramène de la neige dans les couloirs. Les zones plus difficiles glissent plus vite (de −14 pour bout de chou à +7 pour expert).<br>Indice : moins de 38 lente · 38 à 55 modérée · 56 à 75 rapide · 76 et plus très rapide.</p>';
+  openModal('Vitesse de glisse · zones', h);
+}
+function bars(H, i0, back, fwd) {
+  const arr = []; for (let i = i0 - back + 1; i <= i0 + fwd; i++) arr.push(H[i] || null);
+  const mx = Math.max(1, ...arr.map(x => x ? Math.max(x.sn || 0, (x.rain || 0) / 2) : 0));
+  return '<div class="bars">' + arr.map(x => {
+    if (!x) return '<span class="z0"></span>';
+    const sn = x.sn || 0, rn = (x.rain || 0) / 2, v = Math.max(sn, rn), fz = FRZ.includes(x.wc);
+    return '<span class="' + (fz ? 'fz' : rn > sn ? 'rn' : '') + (v <= 0 ? ' z0' : '') + '" style="height:' + Math.round(v / mx * 100) + '%" title="' + hh(x.t) + '"></span>';
+  }).join('') + '<i class="now" style="left:' + (back / (back + fwd) * 100) + '%"></i></div>';
+}
+function mSnow() {
+  const V = VM, sn = V.snow; if (!sn) return openModal('Déneigement', '<p>Données indisponibles.</p>');
+  const H = V.S.H;
+  let h = '<div class="g2">' + R('Tombé 6 h', cm(sn.p6)) + R('Tombé 24 h', cm(sn.p24)) + R('Prévu 6 h', cm(sn.n6)) + R('Prévu 12 h', cm(sn.n12)) + R('Prévu 24 h', cm(sn.n24)) +
+    R('Début neige', sn.snowing ? 'en cours' : sn.start ? hh(sn.start) : '—') + R('Fin neige', sn.end ? hh(sn.end) : '—') + R('Pluie 12 h', mm(sn.rainN12)) +
+    R('Verglas', sn.frzNow ? 'en cours' : sn.frzPast ? 'récent' : sn.frzNext ? 'prévu' : 'non', sn.frzNow || sn.frzPast ? 'c-bad' : '') +
+    R('Regel', sn.iceNow ? 'surfaces glacées' : sn.refreeze ? hh(sn.refreeze) : 'non') + R('Poudrerie', sn.poudNow ? 'oui' : sn.poudNext ? hh(sn.poudNext) : 'non') +
+    R('Neige au sol*', sn.depth != null ? cm(sn.depth) : '—') + '</div>';
+  h += '<h4>Précipitations heure par heure (24 h passées | 24 h à venir)</h4>' + bars(H, V.i0, 24, 24) +
+    '<div class="bx"><span>−24 h</span><span>−12 h</span><span style="color:var(--bad)">maintenant</span><span>+12 h</span><span>+24 h</span></div>' +
+    '<p class="mute" style="font-size:.66rem">Bleu = neige (cm) · vert = pluie · violet = verglas</p>';
+  h += '<h4>Constats</h4>' + sn.A.map(a => '<div class="r"><span style="color:var(--ink);white-space:normal">→ ' + esc(a) + '</span></div>').join('');
+  h += '<p class="mute" style="font-size:.66rem">*Estimation du modèle. Niveau élevé : ≥ 2 cm en 6 h, neige ≥ 0,5 cm/h, verglas, regel ou poudrerie. Moyen : neige ou verglas prévus dans les 12 h.</p>';
+  openModal('Déneigement', h);
+}
+function mCold() {
+  const V = VM, co = V.cold; if (!co || !co.risk) return openModal('Froid', '<p>Données indisponibles.</p>');
+  const c = V.cur;
+  let h = '<div class="g2">' + R('Température', tf(c.T)) + R('Vent', n0(c.ws) + ' km/h') + R('Refroid. éolien', tf(co.wc)) + R('Risque', co.risk.n, 'c-' + (co.risk.cls === 'ok' ? 'ok' : co.risk.cls)) + '</div>' +
+    '<p><b>' + esc(co.risk.txt) + '</b></p>';
+  h += '<h4>Refroidissement éolien (Environnement Canada)</h4><table class="tbl"><tr><th>Indice</th><th>Risque</th><th>Gelure peau exposée</th></tr>' +
+    [['0 à −9', 0], ['−10 à −27', 1], ['−28 à −39', 2], ['−40 à −47', 3], ['−48 à −54', 4], ['−55 et moins', 5]].map(([l, i]) => '<tr class="' + (RISK[i] === co.risk ? 'hl' : '') + '"><td>' + l + '</td><td>' + RISK[i].n + '</td><td>' + RISK[i].frost + '</td></tr>').join('') + '</table>';
+  h += R('Heures avec ressenti ≤ −28°', V.frost);
+  h += '<p class="mute" style="font-size:.66rem">UV max aujourd\'hui : ' + (co.uvmax != null ? n0(co.uvmax) + ' (' + uvTxt(co.uvmax) + ')' : '—') + ' — la neige réfléchit jusqu\'à 80 % des UV.</p>';
+  openModal('Ressenti et froid', h);
+}
+function mDay() {
+  const V = VM, dy = V.day, now = NOW();
+  let h = '<div class="g2">' + R('Aujourd\'hui', dy.s ? (dy.s.o != null ? hrsTxt(dy.s) : 'Fermé') : 'Hors saison') + R('État', dy.state + (dy.cd ? ' · ' + dy.cd : '')) +
+    R('Lever du soleil', hm(V.rise)) + R('Coucher du soleil', hm(V.set)) + (dy.light ? R(dy.light.lbl, dy.light.v) : '') + R('Site officiel', V.siteOpen === true ? 'ouvert' : V.siteOpen === false ? 'fermé' : '—') + '</div>';
+  if (V.crowd) h += '<h4>Achalandage prévu (estimation)</h4>' + R('Niveau', V.crowd.n, 'c-' + V.crowd.cls) + R('Pointe', V.crowd.peak) + '<p class="mute" style="font-size:.8rem">' + esc(V.crowd.why) + '</p>';
+  h += '<h4>7 prochains jours (horaire type de la saison)</h4><table class="tbl"><tr><th>Jour</th><th>Heures</th><th>Note</th></tr>';
+  for (let d = 0; d < 7; d++) { const p = lp(now + d * 24 * HOUR), t = localMs(p.y, p.mo, p.d, 12, 0), s = schedFor(t); h += '<tr class="' + (d === 0 ? 'hl' : '') + '"><td>' + dateTxt(t) + '</td><td>' + (s ? (s.o != null ? hrsTxt(s) : 'Fermé') : 'Hors saison') + '</td><td class="mute">' + esc(s ? s.note : '') + '</td></tr>'; }
+  h += '</table>';
+  if (dy.night && dy.night.hours.length) {
+    const nt = dy.night, hs = nt.hours.length > 14 ? nt.hours.filter((x, i) => i % 2 === 0) : nt.hours;
+    h += '<h4>Fabrication de neige cette nuit (' + hh(nt.st) + ' → ' + hh(nt.en) + ')</h4>' + R('Conditions', nt.q ? nt.q.n : '—', nt.q ? nt.q.cls : '') + R('Heures favorables', nt.win || 'aucune') +
+      '<div class="mini">' + hs.map(x => '<span class="k' + (x.tw <= -4 ? 2 : x.tw <= -2 ? 3 : 0) + '">' + lp(x.t).h + 'h<br>' + Math.round(x.tw) + '°</span>').join('') + '</div>' +
+      '<p class="mute" style="font-size:.75rem">Selon la température de bulbe humide : ≤ −7° excellente, ≤ −4° bonne, ≤ −2° marginale, au-dessus impossible.</p>';
+  }
+  h += '<p style="font-size:.72rem"><a class="lnk" href="' + CFG.horaireWeb + '" target="_blank" rel="noopener">Horaire officiel ↗</a> — les heures peuvent varier selon la météo.</p>';
+  openModal('Journée', h);
+}
+function mHours() {
+  const V = VM; if (!V.S || V.i0 < 0) return openModal('Heure par heure', '<p>Indisponible.</p>');
+  let h = '<table class="tbl"><tr><th>Heure</th><th></th><th>Temp.</th><th>Ress.</th><th>Précip.</th><th>Vent/raf.</th><th>Glisse</th></tr>';
+  for (let k = 0; k < 24; k++) {
+    const x = V.S.H[V.i0 + k]; if (!x) break; const g = V.glideH && V.glideH[k], w = wmo(x.wc, x.day);
+    const p = (x.sn || 0) >= 0.1 ? cm(x.sn) : (x.rain || 0) >= 0.1 ? mm(x.rain) : x.pp != null ? x.pp + ' %' : '—';
+    h += '<tr class="' + (k === 0 ? 'hl' : '') + '"><td>' + (k === 0 ? 'Mtn' : hh(x.t)) + '</td><td>' + w.emoji + '</td><td><b>' + tf(x.T) + '</b></td><td>' + tf(windChill(x.T, x.ws)) + '</td><td>' + p + '</td><td>' + n0(x.ws) + '/' + n0(x.wg) + '</td><td>' + (g ? '<span class="sp k' + (g.ice ? 'ice' : g.lv.k) + '" style="font-size:.6rem">' + g.lv.n + '</span>' : '') + '</td></tr>';
+  }
+  openModal('Prochaines 24 heures', h + '</table>');
+}
+function mPistes() {
+  const V = VM, P = (V.pistes || []).filter(x => x.ico !== '✓'), sn = V.snow;
+  const lvl = p => p === 1 ? 'c-bad">important' : p === 2 ? 'c-warn">à noter' : 'mute">info';
+  let h = '<h4>Pistes et équipements</h4>' + (P.length ? P.map(x => '<div class="r"><span style="color:var(--ink)">' + x.ico + ' ' + esc(x.txt) + '</span><b class="' + lvl(x.p) + '</b></div>').join('') : '<p class="mute">Rien de particulier.</p>');
+  if (sn) h += '<h4>Déneigement</h4>' + sn.A.map(t => '<div class="r"><span style="color:var(--ink)">' + esc(t) + '</span><b class="' + lvl(sn.lv === 'bad' ? 1 : sn.lv === 'warn' ? 2 : 3) + '</b></div>').join('') +
+    R('Tombé en 6 h · 24 h', cm(sn.p6) + ' · ' + cm(sn.p24)) + R('Prévu en 12 h', cm(sn.n12)) + '<div class="bg"><button class="btn" data-act="m-snow">Détails neige et verglas ›</button></div>';
+  h += '<p class="mute" style="font-size:.75rem">Déductions automatiques à partir de la météo et de l\'horaire du jour.</p>';
+  openModal('À noter aujourd\'hui', h);
+}
+function mAlerts() {
+  const V = VM; let h = '';
+  if (V.alerts && V.alerts.length) h += V.alerts.map(a => '<div class="alrt ' + (a.col === 'yellow' || a.type === 'statement' || a.type === 'advisory' ? 'yel' : a.col === 'orange' || a.type === 'watch' ? 'warn' : '') + '"><b>' + esc(a.nom) + '</b> <span class="mute">' + esc(a.zone || '') +
+    (a.exp ? ' · expire ' + hm(a.exp) : '') + '</span>\n' + esc(a.txt.slice(0, 900)) + '</div>').join('');
+  else h += '<p>' + (D.al ? '✓ Aucune alerte d\'Environnement Canada pour le secteur.' : 'Alertes indisponibles' + (D.err.al ? ' (' + esc(D.err.al) + ')' : '') + '.') + '</p>';
+  h += '<h4>Signaux terrain (calculés)</h4>' + V.chips.filter(c => !/^⚠/.test(c.txt)).map(c => '<span class="chip ' + c.cls + '" style="display:inline-block;margin:0 .2rem .2rem 0">' + esc(c.txt) + '</span>').join('');
+  openModal('Alertes', h);
+}
+function mZone(id) {
+  const z = VM.zones.find(x => x.id === id); if (!z) return;
+  const l = z.live || {};
+  const log = LS.get('gpdh.log', []).filter(e => e.z === id).slice(0, 4);
+  let h = '<div class="g2">' + R('Vitesse (météo)', z.est ? '<span class="sp k' + z.est.k + '">' + z.est.n + '</span> ' + z.es : '—') + R('Dans 3 h', z.est3 ? '<span class="sp k' + z.est3.k + '">' + z.est3.n + '</span>' : '—') +
+    R('État (site)', esc(l.etat ? cap(l.etat) : '—')) + R('Pistes ouvertes', l.fr ? l.fr.o + '/' + l.fr.t : '—/' + z.p) + R('Soirée', esc(l.soir ? cap(l.soir) : z.soir ? 'Disponible' : 'Non disponible')) +
+    R('Niveau', esc(l.niv || z.niv)) + R('Versant', esc(z.v)) + R('Remontée', esc(l.rem || z.rem)) + R('Glisseurs', esc(l.gl || z.gl)) +
+    R('Grandeur min.', esc(l.taille || z.taille || 'aucune')) + R('Casque', esc(l.casque || z.casque || 'Fortement recommandé')) + '</div>';
+  if (z.note) h += '<p class="mute">' + esc(z.note) + '</p>';
+  if (log.length) h += '<h4>Mesures chrono récentes</h4>' + log.map(e => R(hm(e.t), (e.kmh ? n0(e.kmh) + ' km/h' : '') + (e.s ? ' · ' + e.s.toFixed(1).replace('.', ',') + ' s' : ''))).join('');
+  h += '<button class="btn pri" data-act="chrono" data-id="' + z.id + '">⏱ Chronométrer cette zone</button>';
+  openModal('Zone ' + z.nom.replace('Parc du ', ''), h);
+}
+
+/* ===================== Chrono / mesure de vitesse ===================== */
+const CH = {run:false, t0:0, el:0, raf:0, zone:null};
+function chronoView() {
+  const log = LS.get('gpdh.log', []), dist = LS.get('gpdh.dist', {}), z = CH.zone || 'toboggan', d = dist[z] || '';
+  const s = CH.el / 1000, k0 = d && s > 0 ? (d / s) * 3.6 : null, kmh = k0 && k0 <= 150 ? k0 : null;
+  return '<div class="sl" style="grid-template-columns:5rem 1fr"><span>Zone</span><select id="chZ" class="inp">' + ZONES.map(x => '<option value="' + x.id + '"' + (x.id === z ? ' selected' : '') + '>' + esc(x.nom) + '</option>').join('') + '</select></div>' +
+    '<div class="sl" style="grid-template-columns:5rem 1fr"><span>Distance (m)</span><input id="chD" class="inp" type="number" inputmode="decimal" placeholder="longueur mesurée" value="' + esc(d) + '"></div>' +
+    '<div class="chrono" id="chT">' + s.toFixed(2).replace('.', ',') + ' s</div><div style="text-align:center;font-weight:850;font-size:1.2rem" id="chK">' + (kmh ? n0(kmh) + ' km/h' : k0 ? '<span class="c-bad">Valeur improbable (distance ou temps)</span>' : '— km/h') + '</div>' +
+    '<button class="bigbtn' + (CH.run ? ' stop' : '') + '" data-act="chGo">' + (CH.run ? 'ARRIVÉE ■' : 'DÉPART ▶') + '</button>' +
+    '<div class="bg"><button class="btn" data-act="chReset">Réinitialiser</button><button class="btn pri" data-act="chSave">Enregistrer</button>' +
+    '<input id="chR" class="inp" style="flex:1;width:auto" type="number" inputmode="decimal" placeholder="ou vitesse radar km/h"></div>' +
+    '<h4>Journal (appareil)</h4>' + (log.length ? log.slice(0, 6).map(e => R(hm(e.t) + ' · ' + esc((ZONES.find(x => x.id === e.z) || {}).nom || e.z), (e.kmh ? n0(e.kmh) + ' km/h' : '—') + (e.s ? ' · ' + e.s.toFixed(1).replace('.', ',') + ' s' : ''))).join('') +
+      '<button class="btn" data-act="chClear">Effacer le journal</button>' : '<p class="mute">Aucune mesure. Entrez la longueur de la piste une fois : elle est mémorisée par zone.</p>');
+}
+function openChrono(zone) { if (zone) CH.zone = zone; openModal('Chrono de descente', chronoView()); }
+function chTick() {
+  CH.el = performance.now() - CH.t0; const el = $('#chT'); if (el) el.textContent = (CH.el / 1000).toFixed(2).replace('.', ',') + ' s';
+  if (CH.run) CH.raf = requestAnimationFrame(chTick);
+}
+function chSyncInputs() {
+  const zs = $('#chZ'), ds = $('#chD'); if (zs) CH.zone = zs.value;
+  if (ds) { const dist = LS.get('gpdh.dist', {}); const v = num(ds.value); if (v) dist[CH.zone] = v; else delete dist[CH.zone]; LS.set('gpdh.dist', dist); }
+}
+
+/* ===================== Radar ===================== */
+const RD = {z:8, layer:null, frames:[], i:0, timer:0, imgs:[]};
+function stopRadar() { clearInterval(RD.timer); RD.timer = 0; }
+function mercPx(lat, lon, z) { const s = 256 * Math.pow(2, z), r = lat * Math.PI / 180; return [(lon + 180) / 360 * s, (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * s]; }
+function openRadar() {
+  if (!RD.layer) RD.layer = (VM.cur && VM.cur.T != null && VM.cur.T > 1) ? 'RADAR_1KM_RRAI' : 'RADAR_1KM_RSNO';
+  openModal('Radar · précipitations', '<div class="rad" id="rad"></div><div class="radbar"><button class="btn" data-act="rz" data-v="-1">−</button><button class="btn" data-act="rplay" id="rplay">❚❚</button>' +
+    '<input type="range" id="rT" min="0" max="0" value="0"><span id="rL" style="font-weight:850;min-width:3.2rem;text-align:right">—</span><button class="btn" data-act="rz" data-v="1">+</button></div>' +
+    '<div class="bg"><button class="btn' + (RD.layer === 'RADAR_1KM_RSNO' ? ' on' : '') + '" data-act="rlayer" data-v="RADAR_1KM_RSNO">❄ Neige</button><button class="btn' + (RD.layer === 'RADAR_1KM_RRAI' ? ' on' : '') + '" data-act="rlayer" data-v="RADAR_1KM_RRAI">🌧 Pluie</button></div>' +
+    '<p class="mute" style="font-size:.64rem">Cercles : 25 et 50 km autour du Domaine (📍). Dernière heure, images aux 6 min. Radar © ECCC GeoMet · fond de carte © Esri, © OpenStreetMap.</p>');
+  drawRadar();
+}
+async function drawRadar() {
+  stopRadar();
+  const box = $('#rad'); if (!box) return;
+  const W = box.clientWidth, Hh = Math.round(Math.min(W, innerHeight * 0.56)); box.style.height = Hh + 'px';
+  const z = RD.z, [px, py] = mercPx(CFG.lat, CFG.lon, z), x0 = px - W / 2, y0 = py - Hh / 2, n = Math.pow(2, z);
+  let h = '';
+  for (let tx = Math.floor(x0 / 256); tx <= Math.floor((x0 + W) / 256); tx++) for (let ty = Math.floor(y0 / 256); ty <= Math.floor((y0 + Hh) / 256); ty++) {
+    if (ty < 0 || ty >= n) continue; const sx = ((tx % n) + n) % n;
+    h += '<img alt="" src="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/' + z + '/' + ty + '/' + sx + '" ' +
+      'onerror="this.onerror=null;this.src=\'https://tile.openstreetmap.org/' + z + '/' + sx + '/' + ty + '.png\'" style="left:' + Math.round(tx * 256 - x0) + 'px;top:' + Math.round(ty * 256 - y0) + 'px;width:256px;height:256px">';
+  }
+  const R0 = 6378137, S = 2 * Math.PI * R0, m = v => v / (256 * n) * S;
+  const bb = [m(x0) - S / 2, S / 2 - m(y0 + Hh), m(x0 + W) - S / 2, S / 2 - m(y0)].map(v => v.toFixed(0)).join(',');
+  const res = S * Math.cos(CFG.lat * Math.PI / 180) / (256 * n), r25 = 25000 / res, r50 = 50000 / res;
+  h += '<div id="radL" class="ov"></div><svg class="ov" width="' + W + '" height="' + Hh + '"><g fill="none" stroke="#d02c24" stroke-width="1.5" stroke-dasharray="4 4" opacity=".75"><circle cx="' + W / 2 + '" cy="' + Hh / 2 + '" r="' + r25 + '"/><circle cx="' + W / 2 + '" cy="' + Hh / 2 + '" r="' + r50 + '"/></g>' +
+    '<text x="' + (W / 2 + 4) + '" y="' + (Hh / 2 - r25 + 12) + '" font-size="10" fill="#d02c24">25 km</text><text x="' + (W / 2 + 4) + '" y="' + (Hh / 2 - r50 + 12) + '" font-size="10" fill="#d02c24">50 km</text></svg>' +
+    '<div class="ov" style="display:grid;place-items:center;font-size:1.3rem;margin-top:-1.2rem">📍</div>';
+  box.innerHTML = h;
+  let frames = [];
+  try {
+    const xml = await fetch('https://geo.weather.gc.ca/geomet?service=WMS&version=1.3.0&request=GetCapabilities&layer=' + RD.layer, {cache:'no-store'}).then(r => r.text());
+    const dm = /<Dimension[^>]*name="time"[^>]*>([^<]+)<\/Dimension>/i.exec(xml);
+    if (dm) { const [a, b] = dm[1].trim().split('/'), end = Date.parse(b), st = Date.parse(a); for (let k = 9; k >= 0; k--) { const t = end - k * 6 * 60000; if (t >= st) frames.push(t); } }
+  } catch (e) {}
+  if (!$('#rad')) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1), base = 'https://geo.weather.gc.ca/geomet?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=TRUE&STYLES=&CRS=EPSG:3857&LAYERS=' + RD.layer +
+    '&WIDTH=' + Math.round(W * dpr) + '&HEIGHT=' + Math.round(Hh * dpr) + '&BBOX=' + bb;
+  if (!frames.length) frames = [null];
+  RD.frames = frames; RD.i = frames.length - 1;
+  const L = $('#radL');
+  L.innerHTML = frames.map((t, i) => '<img alt="" src="' + base + (t ? '&TIME=' + new Date(t).toISOString().replace('.000', '') : '') + '" style="left:0;top:0;width:' + W + 'px;height:' + Hh + 'px;opacity:.85;display:' + (i === RD.i ? 'block' : 'none') + '">').join('');
+  RD.imgs = [...L.querySelectorAll('img')];
+  const sl = $('#rT'); sl.max = frames.length - 1; sl.value = RD.i;
+  sl.oninput = () => { stopRadar(); $('#rplay').textContent = '▶'; showFrame(+sl.value); };
+  showFrame(RD.i);
+  if (frames.length > 1) playRadar();
+}
+function showFrame(i) {
+  RD.i = i; RD.imgs.forEach((im, j) => im.style.display = j === i ? 'block' : 'none');
+  const t = RD.frames[i], l = $('#rL'), s = $('#rT'); if (l) l.textContent = t ? hm(t) : 'récent'; if (s) s.value = i;
+}
+function playRadar() {
+  stopRadar(); let hold = 0; const b = $('#rplay'); if (b) b.textContent = '❚❚';
+  RD.timer = setInterval(() => { if (!$('#rad')) return stopRadar(); if (RD.i === RD.frames.length - 1 && hold++ < 3) return; hold = 0; showFrame((RD.i + 1) % RD.frames.length); }, 450);
+}
+
+/* ===================== Réglages et DEV ===================== */
+function mSettings() {
+  const b = (act, v, cur, lbl) => '<button class="btn' + (cur ? ' on' : '') + '" data-act="' + act + '" data-v="' + v + '">' + lbl + '</button>';
+  let h = '<h4>Thème</h4><div class="bg">' + b('theme', 'auto', SET.theme === 'auto', 'Auto (soleil)') + b('theme', 'light', SET.theme === 'light', 'Clair') + b('theme', 'dark', SET.theme === 'dark', 'Sombre') + '</div>' +
+    '<h4>Taille du texte</h4><div class="bg">' + b('scale', '-', false, 'A−') + '<span style="align-self:center;font-weight:850;min-width:3rem;text-align:center">' + Math.round(SET.scale * 100) + ' %</span>' + b('scale', '+', false, 'A+') + b('scale', '1', false, 'Défaut') + '</div>' +
+    '<h4>Actualisation automatique</h4><div class="bg">' + [5, 10, 15, 30].map(m => b('refint', m, SET.refresh === m, m + ' min')).join('') + '</div>' +
+    '<h4>Liens</h4><p><a class="lnk" href="' + CFG.siteWeb + '" target="_blank" rel="noopener">Site officiel ↗</a> · <a class="lnk" href="' + CFG.horaireWeb + '" target="_blank" rel="noopener">Horaire ↗</a> · ' +
+    '<a class="lnk" href="https://meteo.gc.ca/fr/location/index.html?coords=45.885,-74.123" target="_blank" rel="noopener">Météo Canada ↗</a> · <a class="lnk" href="https://www.quebec511.info/" target="_blank" rel="noopener">Québec 511 ↗</a></p>' +
+    '<h4>Données</h4><div class="bg"><button class="btn" data-act="clearCache">Vider le cache</button><button class="btn" data-act="chClear">Effacer journal chrono</button></div>' +
+    '<h4>Développeur</h4><div class="bg"><button class="btn dng" data-act="dev">DEV</button></div>' +
+    '<p class="mute" style="font-size:.66rem">Version ' + CFG.version + ' · Sources : site du Domaine des Pays d\'en Haut, Open-Meteo, Environnement et Changement climatique Canada. Outil indicatif.</p>';
+  openModal('Réglages', h);
+}
+function mDevCode() {
+  openModal('Code développeur', '<p>Entrer le code pour activer le mode DEV (simulation de conditions, voyage dans le temps, diagnostic).</p>' +
+    '<input id="devCode" class="inp" type="text" autocapitalize="characters" autocomplete="off" placeholder="Code">' +
+    '<div class="bg"><button class="btn pri" data-act="devOk">Valider</button><button class="btn" data-act="settings">Retour</button></div><p id="devMsg" class="c-bad"></p>');
+  setTimeout(() => { const i = $('#devCode'); if (i) i.focus(); }, 50);
+}
+function mDev() {
+  const sc = SCEN[DEV.scen] || SCEN.parfaite, T = DEV.T != null ? DEV.T : sc.T, ws = DEV.ws != null ? DEV.ws : sc.ws, wg = DEV.wg != null ? DEV.wg : sc.wg;
+  const sl = (id, lbl, min, max, step, v, unit) => '<div class="sl"><span>' + lbl + '</span><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + v + '"><b id="' + id + 'V">' + v + unit + '</b></div>';
+  const st = k => D.err[k] ? '<b class="c-bad">erreur</b> <span class="mute">' + esc(D.err[k]).slice(0, 60) + '</span>' : D[k] ? '<b class="c-ok">OK</b> <span class="mute">' + hm(D[k].t) + '</span>' : '<span class="mute">—</span>';
+  const shiftTxt = DEV.shift ? (DEV.shift > 0 ? '+' : '\u2212') + dur(Math.abs(DEV.shift)) : 'aucun';
+  let h = '<div class="bg"><button class="btn' + (DEV.sim ? ' on' : '') + '" data-act="devSim">Simulation : ' + (DEV.sim ? 'ACTIVE' : 'inactive') + '</button>' +
+    '<button class="btn' + (DEV.siteOpen ? ' on' : '') + '" data-act="devSite">Site simulé : ' + (DEV.siteOpen ? 'ouvert' : 'fermé') + '</button></div>' +
+    '<h4>Scénarios</h4><div class="bg">' + Object.keys(SCEN).map(k => '<button class="btn' + (DEV.scen === k ? ' on' : '') + '" data-act="devScen" data-v="' + k + '">' + SCEN[k].nom + '</button>').join('') + '</div>' +
+    '<h4>Réglages fins</h4>' + sl('dvT', 'Température', -45, 15, 1, Math.round(T), '°') + sl('dvW', 'Vent', 0, 90, 1, ws, '') + sl('dvG', 'Rafales', 0, 120, 1, wg, '') + sl('dvS', 'Neige ×', 0, 4, 0.5, DEV.snx, '') +
+    '<h4>Voyage dans le temps (décalage : ' + shiftTxt + ')</h4><div class="bg">' + [['-24', '−24 h'], ['-1', '−1 h'], ['1', '+1 h'], ['24', '+24 h'], ['168', '+7 j']].map(([v, l]) => '<button class="btn" data-act="devShift" data-v="' + v + '">' + l + '</button>').join('') +
+    '<button class="btn" data-act="devJan">Samedi 16 janv. 14 h</button><button class="btn" data-act="devShift" data-v="0">Maintenant</button></div>' +
+    '<h4>Diagnostic des sources</h4>' + R('Open-Meteo', st('om')) + R('ECCC page-ville', st('ec')) + R('ECCC alertes', st('al')) + R('Site officiel', st('site')) +
+    '<div class="bg"><button class="btn" data-act="refresh">Recharger tout</button><button class="btn" data-act="devLock">Verrouiller DEV</button></div>';
+  openModal('DEV · mode test', h);
+  const bind = (id, key, unit) => { const el = $('#' + id); if (!el) return; el.oninput = () => { DEV[key] = +el.value; $('#' + id + 'V').textContent = el.value + unit; saveDev(); if (DEV.sim) render(); }; };
+  bind('dvT', 'T', '°'); bind('dvW', 'ws', ''); bind('dvG', 'wg', ''); bind('dvS', 'snx', '');
+}
+
+/* ===================== Événements ===================== */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act, v = el.dataset.v;
+  if (a === 'close' || (el.id === 'ov' && e.target === el)) return closeModal();
+  switch (a) {
+    case 'refresh': fetchAll(); break;
+    case 'settings': mSettings(); break;
+    case 'm-wx': mWx(); break;
+    case 'm-glide': mGlide(); break;
+    case 'm-snow': mSnow(); break;
+    case 'm-cold': mCold(); break;
+    case 'm-day': mDay(); break;
+    case 'm-hours': mHours(); break;
+    case 'm-pistes': mPistes(); break;
+    case 'alerts': mAlerts(); break;
+    case 'zone': e.stopPropagation(); mZone(el.dataset.id); break;
+    case 'radar': openRadar(); break;
+    case 'rz': RD.z = clamp(RD.z + (+v), 6, 11); drawRadar(); break;
+    case 'rplay': if (RD.timer) { stopRadar(); el.textContent = '▶'; } else playRadar(); break;
+    case 'rlayer': RD.layer = v; openRadar(); break;
+    case 'chrono': openChrono(el.dataset.id); break;
+    case 'chGo':
+      chSyncInputs();
+      if (!CH.run) { CH.run = true; CH.t0 = performance.now(); CH.el = 0; openChrono(); chTick(); }
+      else { CH.run = false; cancelAnimationFrame(CH.raf); CH.el = performance.now() - CH.t0; openChrono(); }
+      break;
+    case 'chReset': CH.run = false; cancelAnimationFrame(CH.raf); CH.el = 0; chSyncInputs(); openChrono(); break;
+    case 'chSave': {
+      chSyncInputs(); const dist = LS.get('gpdh.dist', {})[CH.zone], r = num(($('#chR') || {}).value), s = CH.el / 1000;
+      let kmh = r || (dist && s > 0 ? dist / s * 3.6 : null);
+      if (kmh && kmh > 150) kmh = null;
+      if (!kmh && !(s > 0)) break;
+      const log = LS.get('gpdh.log', []); log.unshift({t:NOW(), z:CH.zone, s:s > 0 && !r ? s : null, kmh}); LS.set('gpdh.log', log.slice(0, 60));
+      CH.el = 0; openChrono(); render(); break;
+    }
+    case 'chClear': LS.set('gpdh.log', []); render(); if ($('#chT')) openChrono(); else mSettings(); break;
+    case 'theme': SET.theme = v; saveSet(); render(); mSettings(); break;
+    case 'scale': SET.scale = v === '1' ? 1 : clamp(Math.round((SET.scale + (v === '+' ? 0.05 : -0.05)) * 100) / 100, 0.75, 1.3); saveSet(); render(); mSettings(); break;
+    case 'refint': SET.refresh = +v; saveSet(); schedule(); mSettings(); break;
+    case 'clearCache': ['gpdh.c.om', 'gpdh.c.ec', 'gpdh.c.al', 'gpdh.c.site'].forEach(LS.del); D.om = D.ec = D.al = D.site = null; render(); fetchAll(); mSettings(); break;
+    case 'dev': if (DEV.unlocked) mDev(); else mDevCode(); break;
+    case 'devOk': {
+      const c = (($('#devCode') || {}).value || '').trim().toUpperCase();
+      if (c === 'BURGER') { DEV.unlocked = true; saveDev(); mDev(); } else { const m = $('#devMsg'); if (m) m.textContent = 'Code invalide.'; }
+      break;
+    }
+    case 'devSim': DEV.sim = !DEV.sim; saveDev(); render(); mDev(); break;
+    case 'devSite': DEV.siteOpen = !DEV.siteOpen; saveDev(); render(); mDev(); break;
+    case 'devScen': DEV.scen = v; DEV.T = DEV.ws = DEV.wg = null; DEV.snx = 1; DEV.sim = true; saveDev(); render(); mDev(); break;
+    case 'devShift': DEV.shift = v === '0' ? 0 : (DEV.shift || 0) + (+v) * HOUR; saveDev(); render(); mDev(); break;
+    case 'devJan': DEV.shift = localMs(2027, 1, 16, 14, 0) - Date.now(); DEV.sim = true; saveDev(); render(); mDev(); break;
+    case 'devLock': DEV.unlocked = false; DEV.sim = false; DEV.shift = 0; saveDev(); render(); closeModal(); break;
+  }
+});
+$('#ov').addEventListener('click', e => { if (e.target.id === 'ov') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); if (e.key === 'Enter' && $('#devCode')) $('[data-act="devOk"]').click(); });
+document.addEventListener('change', e => { if (e.target.id === 'chZ') { CH.zone = e.target.value; openChrono(); } if (e.target.id === 'chD') chSyncInputs(); });
+
+/* ===================== Démarrage ===================== */
+let refreshTimer = 0;
+function schedule() { clearInterval(refreshTimer); refreshTimer = setInterval(() => fetchAll(), SET.refresh * 60000); }
+window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(() => { fitNotes(); if ($('#rad')) drawRadar(); }, 150); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - D.last > 3 * 60000) fetchAll(); });
+setInterval(() => { if (!document.hidden) render(); }, 30000);
+render();
+fetchAll();
+schedule();
+</script>
+</body>
+</html>
